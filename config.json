@@ -1,0 +1,34 @@
+{
+
+    "listenPort": 8080,
+
+    "launchConfigurations": [
+        {
+            "name": "admin",
+            "instanceName": "theAdmin",
+            "enabled": true,
+            "config": {
+            }
+        },
+        {
+            "name": "camcap",
+            "enabled": true,
+            "config": {
+                "device": "/dev/video0"
+            }
+        }
+    ],
+
+    "moduleDefinitions": [
+        {
+            "name": "admin",
+            "uniqueInstance": true,
+            "canStop": false
+        },
+        {
+            "name": "camcap",
+            "uniqueInstance": true,
+            "canStop": true
+        }
+    ]
+}
