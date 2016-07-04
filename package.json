@@ -4,7 +4,9 @@
   "description": "Multipurpose personal server",
   "dependencies": {
     "express": "^4.10.2",
-    "socket.io": "^1.4.5"
+    "socket.io": "^1.4.5",
+    "v4l2camera": "^1.0.4",
+    "webworker-threads": "^0.7.5"
   },
   "scripts": {
     "start": "node server.js"

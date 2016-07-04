@@ -81,7 +81,7 @@ function init() {
 		
 	} );
 
-    socket.emit( "connectToModule", { moduleName: "camcap", instanceName: "camcap_vid0" } );
+    socket.emit( "connectToModule", { moduleName: "camcap", instanceName: "camcap_vid1" } );
 
 	//socket.emit( "someMessage", { } );
 

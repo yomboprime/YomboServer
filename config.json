@@ -12,9 +12,32 @@
         },
         {
             "name": "camcap",
+            "instanceName": "camcap_vid0",
             "enabled": true,
             "config": {
-                "device": "/dev/video0"
+                "device": "/dev/video0",
+                "format": {
+                    "height": "min",
+                    "framesPerSecond": "max",
+                    "type": "YUYV"
+                },
+                "captureIntervalMs": 1300,
+                "storeImagesPath": "../../../../data/cameraCapture"
+            }
+        },
+        {
+            "name": "camcap",
+            "instanceName": "camcap_vid1",
+            "enabled": false,
+            "config": {
+                "device": "/dev/video1",
+                "format": {
+                    "height": "min",
+                    "framesPerSecond": "max",
+                    "type": "YUYV"
+                },
+                "captureIntervalMs": 1300,
+                "storeImagesPath": "../../../../data/cameraCapture"
             }
         }
     ],
@@ -27,7 +50,7 @@
         },
         {
             "name": "camcap",
-            "uniqueInstance": true,
+            "uniqueInstance": false,
             "canStop": true
         }
     ]
