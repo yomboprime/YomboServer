@@ -141,7 +141,8 @@ admin.admin.prototype.clientConnection = function( client ) {
 			instanceName: launchConfig.instanceName
 		};
 	}
-	client.socket.emit( "allData", msg );
+
+	client.socket.emit( "adminAllData", msg );
 
 	var scope = this;
 	client.socket.on( "startModule", function( msg ) {

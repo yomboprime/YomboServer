@@ -17,7 +17,7 @@ function init() {
 
     socket.emit( "connectToModule", { moduleName: "admin" } );
 
-    socket.on( "allData", function( msg ) {
+    socket.on( "adminAllData", function( msg ) {
 
 		var modules = msg.modules;
 		for ( var i = 0, il = modules.length; i < il; i++ ) {
