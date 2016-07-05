@@ -189,19 +189,30 @@ YomboServer.TheServer.prototype.stopModules = function( onStop ) {
 
 	var numModules = this.modules.length;
 
-	var onStopInternal = null;
-	if ( onStop ) {
+	if ( numModules === 0 ) {
 
-		onStopInternal = createFunctionWaitNCalls( numModules, onStop );
+		if ( onStop ) {
+			onStop();
+		}
 
-	};
+	}
+	else {
 
-	for ( var i = 0; i < numModules; i++ ) {
+		var onStopInternal = null;
 
-		var module = this.modules[ i ];
+		if ( onStop ) {
 
-		this.stopModule( module, onStopInternal );
+			onStopInternal = createFunctionWaitNCalls( numModules, onStop );
 
+		};
+
+		for ( var i = 0; i < numModules; i++ ) {
+
+			var module = this.modules[ i ];
+
+			this.stopModule( module, onStopInternal );
+
+		}
 	}
 
 };

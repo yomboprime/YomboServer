@@ -84,13 +84,41 @@ CameraCapture.CameraCapture.prototype.requestFrame = function( config, onCapture
 		//var frame = cam.frameRaw();
 		var frame = scope.cam.toRGB();
 
-		onCaptured( {
-			what: "frame",
-			width: scope.cam.width,
-			height: scope.cam.height,
-// TODO test just with the buffer
-			pixels: frame
-		} );
+		var image = null;
+
+		var width = scope.cam.width;
+		var height = scope.cam.height;
+
+		var encodingType = scope.config.encodingType;
+		if ( encodingType === "pixels" ) {
+			image = {
+				what: "frame",
+				encodingType: encodingType,
+				width: width,
+				height: height,
+				pixels: frame
+			};
+		}
+		else if ( encodingType === "runLength" ) {
+
+			var components = scope.config.components;
+			var shiftBits = scope.config.shiftBits;
+
+			image = {
+				what: "frame",
+				encodingType: encodingType,
+				width: width,
+				height: height,
+				components: components,
+				shiftBits: shiftBits,
+				encodedData: scope.runLengthEncodeImage( width, height, components, shiftBits, 3, frame )
+			};
+			
+		}
+
+		if ( image ) {
+			onCaptured( image );
+		}
 
 		//fs.createWriteStream( path + "image-" + this.imageNumber + ".jpg" ).end( Buffer( frame ) );
 
@@ -190,5 +218,95 @@ CameraCapture.CameraCapture.prototype.selectCameraFormat = function( formats, co
 	}
 
 	return selFormat;
+
+};
+
+CameraCapture.CameraCapture.prototype.runLengthEncodeImage = function( width, height, components, shiftBits, increment, pixels ) {
+
+	var encodedData = [];
+
+	var numPixels = width * height;
+
+	function readValueGray( p, value ) {
+		value.gray = Math.floor( ( pixels[ p ] + pixels[ p + 1 ] + pixels[ p + 2 ] ) / 3 ) >> shiftBits;
+	}
+
+	function readValueRGB( p, value ) {
+		value.r = pixels[ p ] >> shiftBits;
+		value.g = pixels[ p + 1 ] >> shiftBits;
+		value.b = pixels[ p + 2 ] >> shiftBits;
+	}
+
+	function compareValuesGray( value1, value2 ) {
+		return value1.gray === value2.gray ? 0 : 1;
+	}
+
+	function compareValuesRGB( value1, value2 ) {
+		return ( value1.r === value2.r &&
+				value1.g === value2.g &&
+				value1.b === value2.b ) ? 0 : 1;
+	}
+
+	function writeEncodedValueGray( value, p1, p2 ) {
+
+		if ( p1 >= p2 ) {
+			return;
+		}
+
+		encodedData.push( ( p2 - p1 ) / increment );
+		encodedData.push( value.gray );
+
+	}
+
+	function writeEncodedValueRGB( value, p1, p2 ) {
+
+		if ( p1 >= p2 ) {
+			return;
+		}
+
+		encodedData.push( ( p2 - p1 ) / increment );
+		encodedData.push( value.r );
+		encodedData.push( value.g );
+		encodedData.push( value.b );
+
+	}
+
+	var readValue = readValueGray;
+	var compareValues = compareValuesGray;
+	var writeEncodedValue = writeEncodedValueGray;
+	if ( components === 3 ) {
+		readValue = readValueRGB;
+		compareValues = compareValuesRGB;
+		writeEncodedValue = writeEncodedValueRGB;
+	}
+
+	var value1 = { r: 0, g: 0, b: 0, gray: 0 };
+	var value2 = { r: 0, g: 0, b: 0, gray: 0 };
+
+	readValue( 0, value1 );
+
+	var lastP = 0;
+	var p = 3;
+	for ( var i = 1; i < numPixels; i++ ) {
+
+		readValue( p, value2 );
+
+		if ( compareValues( value1, value2 ) !== 0 ) {
+
+			writeEncodedValue( value1, lastP, p );
+			value1.r = value2.r;
+			value1.g = value2.g;
+			value1.b = value2.b;
+			value1.gray = value2.gray;
+			value1.valid = true;
+			lastP = p;
+		}
+
+		p += increment;
+	}
+
+	writeEncodedValue( value1, lastP, p );
+
+	return encodedData;
 
 };

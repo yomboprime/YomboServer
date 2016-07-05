@@ -41,7 +41,7 @@ process.on( "message", function( message ) {
 
 		camcap.start( config );
 
-process.send( { what: "debug", debug: "Child process camcap started ok: " + camcap.started } );
+//process.send( { what: "debug", debug: "Child process camcap started ok: " + camcap.started } );
 
 		setTimeout( captureFunction, config.captureIntervalMs );
 

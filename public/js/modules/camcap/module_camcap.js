@@ -55,7 +55,7 @@ camcap.camcap.prototype.start = function( onStart ) {
 	this.camcapChildProcess.on( "message", function( message ) {
 
 		// Worker response
-		console.log( "Child process said something: " + message.what );
+		//console.log( "Child process said something: " + message.what );
 
 		var what = message.what;
 		if ( what === "frame" ) {

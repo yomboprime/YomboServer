@@ -18,11 +18,14 @@
                 "device": "/dev/video0",
                 "format": {
                     "height": "min",
-                    "framesPerSecond": "max",
+                    "framesPerSecond": "min",
                     "type": "YUYV"
                 },
-                "captureIntervalMs": 1300,
-                "storeImagesPath": "../../../../data/cameraCapture"
+                "captureIntervalMs": 100,
+                "storeImagesPath": "../../../../data/cameraCapture",
+                "encodingType": "pixels",
+                "components": 3,
+                "shiftBits": 5
             }
         },
         {
@@ -37,7 +40,10 @@
                     "type": "YUYV"
                 },
                 "captureIntervalMs": 1300,
-                "storeImagesPath": "../../../../data/cameraCapture"
+                "storeImagesPath": "../../../../data/cameraCapture",
+                "encodingType": "pixels",
+                "components": 1,
+                "shiftBits": 7
             }
         }
     ],

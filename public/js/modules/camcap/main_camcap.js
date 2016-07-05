@@ -18,28 +18,44 @@ function init() {
 		var width = msg.width;
 		var height = msg.height;
 
-		theCanvas.width = width;
-		theCanvas.height = height;
+		if ( theCanvas.width !== width || theCanvas.height !== height ) {
+			theCanvas.width = width;
+			theCanvas.height = height;
+		}
 
 		var ctx2d = theCanvas.getContext( "2d" );
-
-		var pixels = msg.pixels;
 
 		var destImageData = ctx2d.getImageData( 0, 0, width, height);
 		var destPixels = destImageData.data;
 
-		var n = width * height;
-		var p = 0;
-		var pDest = 0;
-		for ( var i = 0; i < n; i++ ) {
-			destPixels[ pDest ] = pixels[ p + 0 ];
-			destPixels[ pDest + 1 ] = pixels[ p + 1 ];
-			destPixels[ pDest + 2 ] = pixels[ p + 2 ];
-			destPixels[ pDest + 3 ] = 255;
-			p += 3;
-			pDest += 4;
-		}
+		var encodingType = msg.encodingType;
+		if ( encodingType === "pixels" ) {
 
+			var pixels = msg.pixels;
+
+			var n = width * height;
+			var p = 0;
+			var pDest = 0;
+			for ( var i = 0; i < n; i++ ) {
+				destPixels[ pDest ] = pixels[ p + 0 ];
+				destPixels[ pDest + 1 ] = pixels[ p + 1 ];
+				destPixels[ pDest + 2 ] = pixels[ p + 2 ];
+				destPixels[ pDest + 3 ] = 255;
+				p += 3;
+				pDest += 4;
+			}
+
+		}
+		else if ( encodingType === "runLength" ) {
+
+			var components = msg.components;
+			var shiftBits = msg.shiftBits;
+
+			var encodedData = msg.encodedData;
+
+			runLengthDecodeImage( width, height, encodedData, destPixels, components, shiftBits );
+
+		}
 		ctx2d.putImageData( destImageData, 0, 0 );
 
 
@@ -56,27 +72,19 @@ function init() {
 
 		var encodedData = runLengthEncodeImage( width, height, destPixels2, 1, 7 );
 
+		var np = width * height * 4;
+		for ( var i = 0; i < np; i+=4 ) {
+			destPixels2[ i  ] = 255;
+			destPixels2[ i + 1 ] = 0;
+			destPixels2[ i + 2 ] = 0;
+			destPixels2[ i + 3 ] = 255;
+		}
+
 		runLengthDecodeImage( width, height, encodedData, destPixels2, 1, 7 );
 
 		ctx2d2.putImageData( destImageData2, 0, 0 );
 */
 
-/*
-		p = 0;
-		pDest = 0;
-		for ( var i = 0; i < n; i++ ) {
-			var r = pixels[ p + 0 ];
-			var g = pixels[ p + 1 ];
-			var b = pixels[ p + 2 ];
-			var gray = Math.floor( ( r + g + b ) / 3 );
-			destPixels2[ pDest ] = gray;
-			destPixels2[ pDest + 1 ] = gray;
-			destPixels2[ pDest + 2 ] = gray;
-			destPixels2[ pDest + 3 ] = 255;
-			p += 3;
-			pDest += 4;
-		}
-*/
 
 		
 	} );
@@ -119,7 +127,7 @@ function runLengthEncodeImage( width, height, pixels, components, shiftBits ) {
 			return;
 		}
 
-		encodedData.push( ( p2 - p1 ) / 4 );
+		encodedData.push( ( p2 - p1 ) >> 2 );
 		encodedData.push( value.gray );
 
 	}
@@ -130,7 +138,7 @@ function runLengthEncodeImage( width, height, pixels, components, shiftBits ) {
 			return;
 		}
 
-		encodedData.push( ( p2 - p1 ) / 4 );
+		encodedData.push( ( p2 - p1 ) >> 2 );
 		encodedData.push( value.r );
 		encodedData.push( value.g );
 		encodedData.push( value.b );
@@ -179,7 +187,6 @@ function runLengthEncodeImage( width, height, pixels, components, shiftBits ) {
 
 function runLengthDecodeImage( width, height, encodedData, pixels, components, shiftBits ) {
 
-	var numPixels = width * height;
 	var encDataLength = encodedData.length;
 
 	var p = 0;
