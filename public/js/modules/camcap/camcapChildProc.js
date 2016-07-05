@@ -5,6 +5,32 @@ var camcap = null;
 
 var config = JSON.parse( process.argv[ 2 ] );
 
+var terminationMarked = false;
+
+var captureFunction = function() {
+
+	camcap.requestFrame( config, function( image ) {
+
+		if ( terminationMarked ) {
+
+			camcap.requestTermination( function() {
+
+				process.exit();
+
+			} );
+
+		}
+		else {
+
+			process.send( image );
+
+			setTimeout( captureFunction, config.captureIntervalMs );
+			
+		}
+
+	} );
+};
+
 process.on( "message", function( message ) {
 
 	var what = message.what;
@@ -15,42 +41,16 @@ process.on( "message", function( message ) {
 
 		camcap.start( config );
 
-		process.send( { what: "debug", debug: "Child process camcap started ok: " + camcap.started } );
+process.send( { what: "debug", debug: "Child process camcap started ok: " + camcap.started } );
 
+		setTimeout( captureFunction, config.captureIntervalMs );
 
 	}
 	else if ( what === "requestTermination" ) {
 
-		camcap.requestTermination( function() {
-
-			process.exit();
-
-		} );
+		terminationMarked = true;
 
 	}
 
 } );
 
-//	postMessage( { what: "debug", debug: "camcap creation: " + theError } );
-
-/*
-	var data = event.data;
-	var what = data.what;
-	if ( what === "start" ) {
-		camcap.start( scopeModule.config );
-		postMessage( { what: "debug", debug: "Worker camcap started ok: " + camcap.started } );
-	}
-	else if ( what === "requestFrame" ) {
-		camcap.requestFrame( scopeModule.config, function( image ) {
-			postMessage( image );
-		} );
-	}
-	else if ( what === "requestTermination" ) {
-		camcap.requestTermination( function() {
-			postMessage( {
-				what: "termination"
-			} );
-			self.close();
-		} );
-	}
-*/

@@ -82,14 +82,14 @@ CameraCapture.CameraCapture.prototype.requestFrame = function( config, onCapture
 		}
 
 		//var frame = cam.frameRaw();
-		var frame = cam.toRGB();
+		var frame = scope.cam.toRGB();
 
 		onCaptured( {
 			what: "frame",
 			width: scope.cam.width,
 			height: scope.cam.height,
 // TODO test just with the buffer
-			pixels: frame.toArrayBuffer()
+			pixels: frame
 		} );
 
 		//fs.createWriteStream( path + "image-" + this.imageNumber + ".jpg" ).end( Buffer( frame ) );
