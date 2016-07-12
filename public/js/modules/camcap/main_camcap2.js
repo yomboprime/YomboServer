@@ -11,7 +11,7 @@ function init() {
 
     socket = io();
 
-    socket.on( "camcapFrame", function( msg ) {
+    socket.on( "ysCamcapFrame", function( msg ) {
 
 		console.log( "Server frame message received." );
 

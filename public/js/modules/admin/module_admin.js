@@ -46,7 +46,7 @@ admin.admin.prototype.start = function( onStart ) {
 	var scope = this;
 	this.yomboServer.registerListener( "startModule", function( params ) {
 		var module = params.module;
-		scope.yomboServer.emitToClientsArray( scope.clients, "moduleStarted", {
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminModuleStarted", {
 			name: module.name,
 			instanceName: module.instanceName,
 			numberOfClients: module.clients.length
@@ -56,7 +56,7 @@ admin.admin.prototype.start = function( onStart ) {
 
 	this.yomboServer.registerListener( "stopModule", function( params ) {
 		var module = params.module;
-		scope.yomboServer.emitToClientsArray( scope.clients, "moduleStopped", {
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminModuleStopped", {
 			name: module.name,
 			instanceName: module.instanceName
 		} );
@@ -65,19 +65,19 @@ admin.admin.prototype.start = function( onStart ) {
 
 	this.yomboServer.registerListener( "clientConnected", function( params ) {
 
-		scope.yomboServer.emitToClientsArray( scope.clients, "clientConnected", { totalNumberOfClients: scope.yomboServer.clients.length } );
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientConnected", { totalNumberOfClients: scope.yomboServer.clients.length } );
 
 	} );
 
 	this.yomboServer.registerListener( "clientDisconnected", function( client ) {
 
-		scope.yomboServer.emitToClientsArray( scope.clients, "clientDisconnected", { totalNumberOfClients: scope.yomboServer.clients.length } );
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientDisconnected", { totalNumberOfClients: scope.yomboServer.clients.length } );
 
 	} );
 
 	this.yomboServer.registerListener( "clientConnectedToModule", function( params ) {
 
-		scope.yomboServer.emitToClientsArray( scope.clients, "clientConnectedToModule", {
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientConnectedToModule", {
 			instanceName: params.module.instanceName,
 			numberOfClients: params.module.clients.length
 		} );
@@ -86,7 +86,7 @@ admin.admin.prototype.start = function( onStart ) {
 
 	this.yomboServer.registerListener( "clientDisconnectedFromModule", function( params ) {
 
-		scope.yomboServer.emitToClientsArray( scope.clients, "clientDisconnectedFromModule", {
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientDisconnectedFromModule", {
 			instanceName: params.module.instanceName,
 			numberOfClients: params.module.clients.length
 		} );
@@ -142,10 +142,10 @@ admin.admin.prototype.clientConnection = function( client ) {
 		};
 	}
 
-	client.socket.emit( "adminAllData", msg );
+	client.socket.emit( "ysAdminAllData", msg );
 
 	var scope = this;
-	client.socket.on( "startModule", function( msg ) {
+	client.socket.on( "ysAdminStartModule", function( msg ) {
 
 		var launchConfig = null;
 		if ( msg.instanceName ) {
@@ -163,7 +163,7 @@ admin.admin.prototype.clientConnection = function( client ) {
 
 	} );
 
-	client.socket.on( "stopModule", function( msg ) {
+	client.socket.on( "ysAdminStopModule", function( msg ) {
 
 		var module = scope.yomboServer.searchByValue( scope.yomboServer.modules, "instanceName", msg.instanceName );
 		if ( module ) {

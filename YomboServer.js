@@ -24,11 +24,11 @@ var io = require( 'socket.io' )( http );
 
 YomboServer.TheServer = function () {
 
+	process.title = "Yomboserver";
+
 	this.inited = false;
 
 	this.config = null;
-
-	this.name = "Unnamed server";
 
 	// Active modules
 	this.modules = [];
@@ -632,7 +632,7 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 	} );
 
-	socket.on( "connectToModule", function( msg ) {
+	socket.on( "ysConnectToModule", function( msg ) {
 
 		var moduleName = msg.moduleName;
 		var instanceName = msg.instanceName;

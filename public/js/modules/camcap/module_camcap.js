@@ -66,7 +66,7 @@ camcap.camcap.prototype.start = function( onStart ) {
 
 			scopeModule.lastFrame = message;
 
-			scopeModule.yomboServer.emitToClientsArray( scopeModule.clients, "camcapFrame", scopeModule.lastFrame );
+			scopeModule.yomboServer.emitToClientsArray( scopeModule.clients, "ysCamcapFrame", scopeModule.lastFrame );
 
 		}
 		else if ( what === "debug" ) {

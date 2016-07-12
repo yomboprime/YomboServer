@@ -15,9 +15,9 @@ function init() {
 
     socket = io();
 
-    socket.emit( "connectToModule", { moduleName: "admin" } );
+    socket.emit( "ysConnectToModule", { moduleName: "admin" } );
 
-    socket.on( "adminAllData", function( msg ) {
+    socket.on( "ysAdminAllData", function( msg ) {
 
 		var modules = msg.modules;
 		for ( var i = 0, il = modules.length; i < il; i++ ) {
@@ -37,31 +37,31 @@ function init() {
 
 	} );
 
-	socket.on( "moduleStarted", function( module ) {
+	socket.on( "ysAdminModuleStarted", function( module ) {
 
 		createModuleUI( module );
 
 	} );
 
-	socket.on( "moduleStopped", function( module ) {
+	socket.on( "ysAdminModuleStopped", function( module ) {
 
 		destroyModuleUI( module );
 
 	} );
 
-	socket.on( "clientConnected", function( msg ) {
+	socket.on( "ysAdminClientConnected", function( msg ) {
 
 		totalNumberOfClients++;
 
 	} );
 
-	socket.on( "clientDisconnected", function( msg ) {
+	socket.on( "ysAdminClientDisconnected", function( msg ) {
 
 		totalNumberOfClients++;
 
 	} );
 
-	socket.on( "clientConnectedToModule", function( msg ) {
+	socket.on( "ysAdminClientConnectedToModule", function( msg ) {
 
 console.log( "Client connected to module instance: " + msg.instanceName );
 
@@ -69,7 +69,7 @@ console.log( "Client connected to module instance: " + msg.instanceName );
 
 	} );
 
-	socket.on( "clientDisconnectedFromModule", function( msg ) {
+	socket.on( "ysAdminClientDisconnectedFromModule", function( msg ) {
 
 		setClientCountModule( msg.instanceName, msg.numberOfClients );
 
@@ -217,7 +217,7 @@ function setClientCountModule( instanceName, value ) {
 
 function startModule( name, instanceName ) {
 
-	socket.emit( "startModule", {
+	socket.emit( "ysAdminStartModule", {
 		name: name,
 		instanceName: instanceName
 	} );
@@ -226,7 +226,7 @@ function startModule( name, instanceName ) {
 
 function stopModule( instanceName ) {
 
-	socket.emit( "stopModule", {
+	socket.emit( "ysAdminStopModule", {
 		instanceName: instanceName
 	} );
 
