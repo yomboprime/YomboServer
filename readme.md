@@ -62,20 +62,34 @@ camcap module:
 
 webrtc module:
 
-probar app de ejemplo
-mirar si el server se puede integrar en modulo yomboserver
-probar a no usar el bundle, usando mi socket.io
-probar casos de uso
+ V - probar app de ejemplo
+ V - mirar si el server se puede integrar en modulo yomboserver
+   - probar a no usar el bundle, usando mi socket.io
+ V - probar casos de uso
 
 
 
 ## IDEAS
 
-Multi videochat with shared drawing board, text chat... think more ideas:
- - start game bot (guess words by a drawing)
+Multi videochat with shared drawing board, ... think more ideas:
+
  - drawing board is a canvas. It has tools. The tool actions is what is sent through network.
+
  - Tools:
     - Free drawing (polyline)
     - Line
     - Rectangle
+    - Ellipse
+    - Flood fill
+    - Text
+
  - save board image to file / copy image
+
+ - the board is resolution independent, all positions/sizes are relative to [0,1]
+
+ - client canvas is resizable
+
+ - se necesitan dos canvas en el cliente, uno de trabajo y otro de visualizacion.
+    En el de visualizacion se pintan las herramientas mientras se usan, por ejemplo un rectangulo (mano alzada no)
+
+ - the client stores all actions from the last "board erase", applies them if client canvas is resized

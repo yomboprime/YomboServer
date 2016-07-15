@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Yomboserver WebRTC Client Application</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	    body {
+		background-color: black;
+	    }
+	    .otherVideo {
+                height:225px;
+                width:300px;
+            }
+        </style>
+
+        <script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="/easyrtc/easyrtc.js"></script>
+	<script src="main_audienceClient.js"></script>
+
+    </head>
+
+    <body>
+
+	<button id="connectButton" onclick="init()">Connect to server</button>
+
+	<div id="divVideos"></div>
+
+    </body>
+</html>

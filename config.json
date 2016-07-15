@@ -11,16 +11,34 @@
             }
         },
         {
+            "name": "sharedboard",
+            "instanceName": "thesharedboard",
+            "enabled": false,
+            "config": {
+                "room": "SharedBoardRoom",
+                "actionStorageClean": 500
+            }
+        },
+        {
             "name": "rtcsignal",
             "instanceName": "theRTCSignalServer",
-            "enabled": true,
+            "enabled": false,
             "config": {
+                "adminPassword": "lolailo12",
+                "initialRooms": [
+                    {
+                        "name": "homeWebcam",
+                        "cameraPassword": "lolailo12",
+                        "storePassword": "lolailo12",
+                        "vipPassword": "lolailo12"
+                    }
+                ]
             }
         },
         {
             "name": "camcap",
             "instanceName": "camcap_vid0",
-            "enabled": false,
+            "enabled": true,
             "config": {
                 "device": "/dev/video0",
                 "format": {
@@ -29,7 +47,7 @@
                     "type": "YUYV"
                 },
                 "captureIntervalMs": 200,
-                "storeImagesPath": "../../../../data/cameraCapture",
+                "storeImagesPath": "../../../data/cameraCapture",
                 "encodingType": "runLength",
                 "components": 3,
                 "shiftBits": 5
@@ -47,7 +65,7 @@
                     "type": "YUYV"
                 },
                 "captureIntervalMs": 200,
-                "storeImagesPath": "../../../../data/cameraCapture",
+                "storeImagesPath": "../../../data/cameraCapture",
                 "encodingType": "runLength",
                 "components": 3,
                 "shiftBits": 5
@@ -64,7 +82,7 @@
         {
             "name": "rtcsignal",
             "uniqueInstance": true,
-            "canStop": false
+            "canStop": true
         },
         {
             "name": "camcap",

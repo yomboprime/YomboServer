@@ -273,7 +273,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 
 	// Obtain module code
 
-	var modulePath = "./public/js/modules/" + name + "/module_" + name;
+	var modulePath = "./public/modules/" + name + "/module_" + name;
 	
 	var moduleCode = require( modulePath );
 

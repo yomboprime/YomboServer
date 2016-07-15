@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Yomboserver Camera Capture WebRTC Application</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	    body {
+		background-color: black;
+	    }
+            .selfVideo {
+                height:225px;
+                width:300px;
+            }
+        </style>
+
+        <script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="/easyrtc/easyrtc.js"></script>
+	<script src="main_cameraClient.js"></script>
+
+    </head>
+
+    <body>
+
+	<button id="connectButton" onclick="init()">Connect camera</button>
+
+	<video id="localVideo" class="selfVideo"></video>
+
+    </body>
+</html>
