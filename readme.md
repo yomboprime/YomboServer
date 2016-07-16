@@ -115,3 +115,5 @@ Multi videochat with shared drawing board, ... think more ideas:
     En el de visualizacion se pintan las herramientas mientras se usan, por ejemplo un rectangulo (mano alzada no)
 
  - the client stores all actions from the last "board erase", applies them if client canvas is resized
+
+ctx.fillStyle = "rgb(200,0,0)";

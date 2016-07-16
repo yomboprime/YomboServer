@@ -9,7 +9,7 @@ var sharedboard = function() {
 	
 	this.currentToolState = {
 
-		selectedTool: sharedboard.toolList[ 2 ],
+		selectedTool: sharedboard.toolList[ 4 ],
 		strokeStyle: "black",
 		fillStyle: "black",
 		fillNoStroke: false,
@@ -65,6 +65,36 @@ sharedboard.commandList = [
 				ctx2d.stroke();
 			}
 		}
+	},
+	{
+		name: "rectangle",
+		paintFunction: function( ctx2d, width, height, cmd ) {
+			if ( cmd.fillNoStroke ) {
+				ctx2d.fillStyle = cmd.fillStyle;
+				ctx2d.fillRect( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height );
+			}
+			else {
+				ctx2d.strokeStyle = cmd.strokeStyle;
+				ctx2d.strokeRect( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height );
+			}
+		}
+	},
+	{
+		name: "ellipse",
+		paintFunction: function( ctx2d, width, height, cmd ) {
+			if ( cmd.fillNoStroke ) {
+				ctx2d.fillStyle = cmd.fillStyle;
+				ctx2d.beginPath();
+				ctx2d.ellipse( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height, 0, 0, 2 * Math.PI, false );
+				ctx2d.fill();
+			}
+			else {
+				ctx2d.strokeStyle = cmd.strokeStyle;
+				ctx2d.beginPath();
+				ctx2d.ellipse( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height, 0, 0, 2 * Math.PI, false );
+				ctx2d.stroke();
+			}
+		}
 	}
 ];
 
@@ -73,6 +103,38 @@ for ( var i = 0, il = sharedboard.commandList.length; i < il; i++ ) {
 	var cmd = sharedboard.commandList[ i ];
 	sharedboard.commandHash[ cmd.name ] = cmd;
 }
+
+sharedboard.commonGuiContinueFunction = function( sharedBoard, x, y ) {
+
+	var ts = sharedBoard.currentToolState;
+	var x0 = ts.x0;
+	var y0 = ts.y0;
+	var w = x - x0;
+	var h = y - y0;
+	if ( w < 0 ) {
+		x0 = x;
+		w = -w;
+	}
+	if ( h < 0 ) {
+		y0 = y;
+		h = -h;
+	}
+	var cmd = ts.currentCommand;
+	cmd.x = x0;
+	cmd.y = y0;
+	cmd.width = w;
+	cmd.height = h;
+
+	sharedBoard.drawLocal( cmd );
+
+};
+
+sharedboard.commonGuiEndFunction = function( sharedBoard, x, y ) {
+
+	sharedBoard.sendCommandArray( [ sharedBoard.currentToolState.currentCommand ] );
+	sharedBoard.currentToolState.currentCommand = null;
+
+};
 
 sharedboard.toolList = [
 	{
@@ -140,7 +202,6 @@ sharedboard.toolList = [
 				points[ 1 ].x = x;
 				points[ 1 ].y = y;
 			}
-			currentCommand.strokeStyle = "red";
 			sharedBoard.sendCommandArray( [ currentCommand ] );
 			sharedBoard.currentToolState.currentCommand = null;
 		}
@@ -148,26 +209,55 @@ sharedboard.toolList = [
 	{
 		name: "rectangle",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			var ts = sharedBoard.currentToolState;
+			ts.x0 = x;
+			ts.y0 = y;
+			ts.currentCommand = {
+				name: "rectangle",
+				strokeStyle: ts.strokeStyle,
+				fillStyle: ts.fillStyle,
+				fillNoStroke: ts.fillNoStroke,
+				x: x,
+				y: y,
+				width: 0,
+				height: 0
+			};
+
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
-		},
-		guiEndFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
-		}
+		guiContinueFunction: sharedboard.commonGuiContinueFunction,
+		guiEndFunction: sharedboard.commonGuiEndFunction
 	},
 	{
 		name: "ellipse",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			var ts = sharedBoard.currentToolState;
+			ts.x0 = x;
+			ts.y0 = y;
+			ts.currentCommand = {
+				name: "ellipse",
+				strokeStyle: ts.strokeStyle,
+				fillStyle: ts.fillStyle,
+				fillNoStroke: ts.fillNoStroke,
+				x: x,
+				y: y,
+				width: 0,
+				height: 0
+			};
+
 		},
 		guiContinueFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			var ts = sharedBoard.currentToolState;
+			var x0 = ts.x0;
+			var y0 = ts.y0;
+			var w = Math.abs( x - x0 );
+			var h = Math.abs( y - y0 );
+			var cmd = ts.currentCommand;
+			cmd.width = w;
+			cmd.height = h;
+
+			sharedBoard.drawLocal( cmd );
 		},
-		guiEndFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
-		}
+		guiEndFunction: sharedboard.commonGuiEndFunction
 	},
 	{
 		name: "floodfill",
