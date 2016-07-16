@@ -9,16 +9,16 @@ var sharedboard = function() {
 	
 	this.currentToolState = {
 
-		selectedTool: sharedboard.toolList[ 0 ],
+		selectedTool: sharedboard.toolList[ 2 ],
 		strokeStyle: "black",
 		fillStyle: "black",
-		doFill: false,
+		fillNoStroke: false,
 
-		currentCommand: null,
-		drawLocalCurrentCommand: false,
-		readyToSend: false
+		currentCommand: null
 
 	};
+
+	this.guiStateDown = false;
 
 };
 
@@ -35,6 +35,36 @@ sharedboard.commandList = [
 			ctx2d.fillStyle = cmd.fillStyle;
 			ctx2d.fillRect( 0, 0, width, height );
 		}
+	},
+	{
+		name: "polyline",
+		paintFunction: function( ctx2d, width, height, cmd ) {
+			var points = cmd.points;
+			var numPoints = points.length;
+			if ( numPoints === 0 ) {
+				return;
+			}
+			if ( cmd.fillNoStroke ) {
+				ctx2d.fillStyle = cmd.fillStyle;
+			}
+			else {
+				ctx2d.strokeStyle = cmd.strokeStyle;
+			}
+
+			ctx2d.beginPath();
+			var point = points[ 0 ];
+			ctx2d.moveTo( point.x * width, point.y * height );
+			for ( var i = 1; i < numPoints; i++ ) {
+				point = points[ i ];
+				ctx2d.lineTo( point.x * width, point.y * height );
+			}
+			if ( cmd.fillNoStroke ) {
+				ctx2d.fill();
+			}
+			else {
+				ctx2d.stroke();
+			}
+		}
 	}
 ];
 
@@ -47,89 +77,119 @@ for ( var i = 0, il = sharedboard.commandList.length; i < il; i++ ) {
 sharedboard.toolList = [
 	{
 		name: "eraseboard",
-		guiStartFunction: function( currentToolState, x, y ) {
-			currentToolState.currentCommand = {
+		guiStartFunction: function( sharedBoard, x, y ) {
+			var command = {
 				name: "eraseboard",
 				fillStyle: currentToolState.fillStyle
 			};
-			currentToolState.readyToSend = true;
+			sharedBoard.sendCommandArray( [ command ] );
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
+		guiEndFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		}
 	},
 	{
 		name: "freeDrawing",
-		guiStartFunction: function( currentToolState, x, y ) {
-			// Nothing to do
+		guiStartFunction: function( sharedBoard, x, y ) {
+			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y );
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
-			// Nothing to do
+		guiContinueFunction: function( sharedBoard, x, y ) {
+			var currentCommand = sharedBoard.currentToolState.currentCommand;
+			currentCommand.points.push( { x: x, y: y } );
+			if ( currentCommand.points.length >= 10 ) {
+				sharedBoard.sendCommandArray( [ currentCommand ] );
+				sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y );
+			}
+			else {
+				sharedBoard.drawLocal( currentCommand );
+			}
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
-			// Nothing to do
+		guiEndFunction: function( sharedBoard, x, y ) {
+			var currentCommand = sharedBoard.currentToolState.currentCommand;
+			currentCommand.points.push( { x: x, y: y } );
+			sharedBoard.sendCommandArray( [ currentCommand ] );
+			sharedBoard.currentToolState.currentCommand = null;
 		}
 	},
 	{
 		name: "line",
-		guiStartFunction: function( currentToolState, x, y ) {
-			// Nothing to do
+		guiStartFunction: function( sharedBoard, x, y ) {
+			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y );
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
-			// Nothing to do
+		guiContinueFunction: function( sharedBoard, x, y ) {
+			var points = sharedBoard.currentToolState.currentCommand.points;
+			if ( points.length < 2 ) {
+				points.push( { x: x, y: y } );
+			}
+			else {
+				points[ 1 ].x = x;
+				points[ 1 ].y = y;
+			}
+			sharedBoard.drawLocal( sharedBoard.currentToolState.currentCommand );
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
-			// Nothing to do
+		guiEndFunction: function( sharedBoard, x, y ) {
+			var currentCommand = sharedBoard.currentToolState.currentCommand;
+			var points = currentCommand.points;
+			if ( points.length < 2 ) {
+				points.push( { x: x, y: y } );
+			}
+			else {
+				points[ 1 ].x = x;
+				points[ 1 ].y = y;
+			}
+			currentCommand.strokeStyle = "red";
+			sharedBoard.sendCommandArray( [ currentCommand ] );
+			sharedBoard.currentToolState.currentCommand = null;
 		}
 	},
 	{
 		name: "rectangle",
-		guiStartFunction: function( currentToolState, x, y ) {
+		guiStartFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
+		guiEndFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		}
 	},
 	{
 		name: "ellipse",
-		guiStartFunction: function( currentToolState, x, y ) {
+		guiStartFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
+		guiEndFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		}
 	},
 	{
 		name: "floodfill",
-		guiStartFunction: function( currentToolState, x, y ) {
+		guiStartFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
+		guiEndFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		}
 	},
 	{
 		name: "text",
-		guiStartFunction: function( currentToolState, x, y ) {
+		guiStartFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiContinueFunction: function( currentToolState, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiEndFunction: function( currentToolState, x, y ) {
+		guiEndFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		}
 	}
@@ -161,46 +221,41 @@ sharedboard.prototype.init = function( firstCanvas, presentationCanvas, socket, 
 
 sharedboard.prototype.guiStartCommand = function( x, y ) {
 
-	this.currentToolState.selectedTool.guiStartFunction( this.currentToolstate, x, y );
+	this.currentToolState.selectedTool.guiStartFunction( this, x, y );
 
-	this.checkReadyToSend();
+	this.guiStateDown = true;
 
 };
 
 sharedboard.prototype.guiContinueCommand = function( x, y ) {
 
-	this.currentToolState.selectedTool.guiContinueFunction( this.currentToolstate, x, y );
+	if ( ! this.guiStateDown ) {
+		return;
+	}
 
-	this.checkReadyToSend();
-
+	this.currentToolState.selectedTool.guiContinueFunction( this, x, y );
 
 };
 
 sharedboard.prototype.guiEndCommand = function( x, y ) {
 
-	this.currentToolState.selectedTool.guiEndFunction( this.currentToolstate, x, y );
+	this.currentToolState.selectedTool.guiEndFunction( this, x, y );
 
-	this.checkReadyToSend();
+	this.guiStateDown = false;
 
 };
 
-sharedboard.prototype.checkReadyToSend = function() {
+sharedboard.prototype.drawLocal = function() {
 
-	if ( this.currentToolState.readyToSend ) {
+	this.blit();
 
-		this.socket.emit( "yssbPaintCommand", [ this.currentToolState.currentCommand ] );
-		this.currentToolState.currentCommand = null;
-		this.currentToolState.readyToSend = false;
+	this.executeCommandArray( this.presentationCanvas, [ this.currentToolState.currentCommand ] );
 
-	}
-	else if ( this.currentToolState.drawLocalCurrentCommand ) {
+};
 
-		this.blit();
+sharedboard.prototype.sendCommandArray = function( commandArray ) {
 
-		this.executeCommandArray( this.presentationCanvas, [ this.currentToolState.currentCommand ] );
-
-		this.currentToolState.drawLocalCurrentCommand = false;
-	}
+	this.socket.emit( "yssbPaintCommand", commandArray );
 
 };
 
@@ -226,6 +281,8 @@ sharedboard.prototype.resize = function( size ) {
 
 	console.log( "resize." );
 
+	// TODO setTimeout, and if resized meanwhile, cancel it and relaunch
+
 	this.presentationCanvas.width = size;
 	this.presentationCanvas.height = size;
 
@@ -241,8 +298,18 @@ sharedboard.prototype.blit = function() {
 	var ctx2d = this.presentationCanvas.getContext( "2d" );
 	ctx2d.drawImage( this.firstCanvas, 0, 0 );
 
+};
 
-//	ctx2d.fillStyle = "white";
-//	ctx2d.clearRect( 50, 50, 100, 100 );
+sharedboard.prototype.createPolylineCommand = function( x, y ) {
+
+	var ts = this.currentToolState;
+
+	return {
+		name: "polyline",
+		strokeStyle: ts.strokeStyle,
+		fillStyle: ts.fillStyle,
+		fillNoStroke: ts.fillNoStroke,
+		points: [ { x: x, y: y } ]
+	};
 
 };
