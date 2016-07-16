@@ -37,18 +37,39 @@ Module --> Client:
  - `"ysCamcapFrame"`
 
 
+### rtcsignal Module
+
+Module --> Client:
+
+ - ?
+
+Client --> Module:
+
+ - `"easyrtcAuth"`
+ - `"roomJoin"`
+ - `"roomCreate"`
+
+
+### sharedboard Module
+
+Module --> Client:
+
+ - `"yssbPaintCommand"
+
+Client --> Module:
+
+ - `"yssbPaintCommand"
+ - `"yssbGetLatestData"
+
+
+-------------------------------------------------------
+
+
 ##TODO
-
-
- - quitar subdirectorio js de public y subir su contenido a public
-
- - el admin puede marcar un podcast como privado (por defecto es así) y los clientes no transmisores no pueden verlo.
-
 
 rooms:
     each module is responsable of adding/removing clients to/from rooms, via yomboserver functions. There is no room object.
     Only broadcasting use needs rooms, but rooms can also be used to tag client properties.
-
 
 admin:
     start all modules
@@ -67,6 +88,7 @@ webrtc module:
    - probar a no usar el bundle, usando mi socket.io
  V - probar casos de uso
 
+ - el admin puede marcar un podcast como privado (por defecto es así) y los clientes no transmisores no pueden verlo.
 
 
 ## IDEAS

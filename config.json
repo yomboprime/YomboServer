@@ -13,10 +13,10 @@
         {
             "name": "sharedboard",
             "instanceName": "thesharedboard",
-            "enabled": false,
+            "enabled": true,
             "config": {
                 "room": "SharedBoardRoom",
-                "actionStorageClean": 500
+                "commandStorageClean": 200
             }
         },
         {
@@ -38,7 +38,7 @@
         {
             "name": "camcap",
             "instanceName": "camcap_vid0",
-            "enabled": true,
+            "enabled": false,
             "config": {
                 "device": "/dev/video0",
                 "format": {
@@ -78,6 +78,11 @@
             "name": "admin",
             "uniqueInstance": true,
             "canStop": false
+        },
+        {
+            "name": "sharedboard",
+            "uniqueInstance": false,
+            "canStop": true
         },
         {
             "name": "rtcsignal",
