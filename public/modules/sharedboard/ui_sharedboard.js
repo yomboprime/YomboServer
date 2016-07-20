@@ -1,4 +1,9 @@
 
+var iconSize = 48;
+
+var colorChoosePanelStroke = null;
+var colorChoosePanelFill = null;
+
 function createContextMenu() {
 
 
@@ -33,25 +38,13 @@ function createContextMenu() {
 
 function createToolbar( sharedBoard ) {
 
-	var iconSize = 48;
-
 	// Tool select button
 	var toolSelectButton = new sap.m.Button( {
 		icon: "/public/assets/icons/sharedboard/toolFreeDrawing.png",
 		press: function() {
+
 			toolSelectMenu.open( false, null, "left top", "left bottom", toolSelectButton, "0 0", "fit" );
-/*
-			var canvas1 = document.createElement( "canvas" );
-			canvas1.width = iconSize;
-			canvas1.height = iconSize;
-			var ctx2d = canvas1.getContext( "2d" );
-			ctx2d.fillStyle = "red";
-			ctx2d.fillRect( 0, 0 , canvas1.width, canvas1.height );
 
-			setCanvasAsButtonIcon( items[ 0 ], canvas1 );
-*/
-
-			//items[ 0 ].setIcon( "/public/assets/icons/sharedboard/2.png" );
 		},
 		tooltip: 'Select tool for drawing.'
 	} );
@@ -66,6 +59,8 @@ function createToolbar( sharedBoard ) {
 		toolSelectButton.setIcon( button.getIcon() );
 
 	}
+
+	// Tool select menu
 
 	var toolSelectMenu = new sap.ui.unified.Menu(
 	{
@@ -124,6 +119,50 @@ function createToolbar( sharedBoard ) {
 
 	toolSelectMenu.addStyleClass( "unselectable" );
 
+	// Stroke and Fill color buttons and panels
+
+	var canvasStrokeColor = document.createElement( "canvas" );
+	canvasStrokeColor.width = iconSize;
+	canvasStrokeColor.height = iconSize;
+
+	var strokeColorButton = new sap.m.Button( {
+		press: function() {
+			colorChoosePanelStroke.open( false, null, "left top", "left bottom", strokeColorButton, "0 0", "fit" );
+		},
+		tooltip: 'Set stroke color.'
+	} );
+
+	paintIconWithColor( canvasStrokeColor, strokeColorButton, sharedBoard.currentToolState.strokeStyle );
+
+	var canvasFillColor = document.createElement( "canvas" );
+	canvasFillColor.width = iconSize;
+	canvasFillColor.height = iconSize;
+
+	var fillColorButton = new sap.m.Button( {
+		press: function() {
+			colorChoosePanelFill.open( false, null, "left top", "left bottom", fillColorButton, "0 0", "fit" );
+		},
+		tooltip: 'Set fill color.'
+	} );
+
+	paintIconWithColor( canvasFillColor, fillColorButton, sharedBoard.currentToolState.fillStyle );
+
+	colorChoosePanelStroke = createColorChoosePanel( sharedBoard, "stroke", "Choose stroke color", function( color ) {
+
+		sharedBoard.currentToolState.strokeStyle = color;
+
+		paintIconWithColor( canvasStrokeColor, strokeColorButton, color );
+
+	} );
+
+	colorChoosePanelFill = createColorChoosePanel( sharedBoard, "fill", "Choose fill color", function( color ) {
+
+		sharedBoard.currentToolState.fillStyle = color;
+
+		paintIconWithColor( canvasFillColor, fillColorButton, color );
+
+	} );
+
 	var toolbarItems = [
 		toolSelectButton,
 		new sap.m.Button( {
@@ -132,7 +171,9 @@ function createToolbar( sharedBoard ) {
 				sharedboard.toolList[ 0 ].guiStartFunction( sharedBoard, 0, 0 );
 			},
 			tooltip: 'Erase all the board with fill color.'
-		} )
+		} ),
+		strokeColorButton,
+		fillColorButton
 	];
 
 	var toolbarContent = new sap.ui.layout.HorizontalLayout( "theToolbarContent", {
@@ -163,5 +204,127 @@ function createToolbar( sharedBoard ) {
 function setCanvasAsButtonIcon( sapmButton, canvas ) {
 
 	sapmButton.setIcon( canvas.toDataURL() );
+
+}
+
+function paintIconWithColor( canvas, button, color ) {
+
+	var ctx2d = canvas.getContext( "2d" );
+	if ( color === "transparent" ) {
+		ctx2d.fillStyle = "white";
+		ctx2d.fillRect( 0, 0 , canvas.width, canvas.height );
+	}
+	else {
+		ctx2d.fillStyle = color;
+		ctx2d.fillRect( 0, 0 , canvas.width, canvas.height );
+	}
+
+	setCanvasAsButtonIcon( button, canvas );
+
+}
+
+function createColorChoosePanel( sharedBoard, id, title, onColorChanged ) {
+
+	var colorPalette = null;//localStorage.colorPalette;
+
+	if ( ! colorPalette ) {
+
+		colorPalette = [
+			[ "transparent", "#FF8080", "#FFFF80", "#80FF80", "#408040", "#80FFFF", "#8080FF", "#FF80FF" ],
+			[ "#FF0000", "#FF8000", "#FFFF00", "#00FF00", "#008000", "#00FFFF", "#0000FF", "#FF00FF" ],
+			[]
+		];
+
+		var j = colorPalette.length - 1;
+		for ( var i = 0; i < 8; i++ ) {
+			var gray = Math.floor( i * 255 / 7 );
+			colorPalette[ j ].push( "rgb(" + gray + ", " + gray + ", " + gray + ")" );
+		}
+
+		colorPalette.push( [ "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" ] );
+		colorPalette.push( [ "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" ] );
+
+		localStorage.colorPalette = colorPalette;
+
+	}
+
+	var canvasColorChoose = document.createElement( "canvas" );
+	canvasColorChoose.width = iconSize;
+	canvasColorChoose.height = iconSize;
+
+	var rowsItems = [];
+
+	// Rows of colors
+	for ( var k = 0; k < colorPalette.length; k++ ) {
+
+		var rowColors = colorPalette[ k ];
+
+		var rowItems = [];
+
+		for ( var i = 0; i < rowColors.length; i++ ) {
+
+			var color = rowColors[ i ];
+
+			var colorButton = new sap.m.Button( {
+				press: function( oControlEvent ) {
+					var button = oControlEvent.getSource();
+					var color = button.data( "customColor" );
+
+					onColorChanged( color );
+
+					// TODO remember last button pressed to modify its color from color chooser?
+
+				},
+				customData: { Type: "sap.ui.core.CustomData", key: "customColor", value: color }
+			} );
+
+			paintIconWithColor( canvasColorChoose, colorButton, color );
+
+			rowItems.push( colorButton );
+
+		}
+
+		var rowHorizontalLayout = new sap.ui.layout.HorizontalLayout( "rowColorChoosePanel" + id + "_" + k, {
+			content: [
+				rowItems
+			]
+		} );
+
+		rowsItems.push( rowHorizontalLayout );
+	}
+
+	// Color picker
+
+	var colorPicker = new sap.ui.commons.ColorPicker();
+	var colorPickerFunction = function( oControlEvent ) {
+		var color = oControlEvent.getParameters().hex;
+		onColorChanged( color );
+	};
+	colorPicker.attachChange( colorPickerFunction );
+	colorPicker.attachLiveChange( colorPickerFunction );
+
+	var colorChoosePanelContent = new sap.ui.layout.VerticalLayout( "theColorChoosePanelContent_" + id, {
+		content: [
+			rowsItems,
+			colorPicker
+		]
+	} );
+
+	var colorChooseDialog = new sap.ui.commons.Dialog();
+
+	colorChooseDialog.setWidth( "340px" );
+    colorChooseDialog.setHeight( "470px" );
+    colorChooseDialog.addStyleClass( "unselectable" );
+    colorChooseDialog.setKeepInWindow( true );
+
+    colorChooseDialog.attachClosed( function() {
+        // TODO (when needed)
+    } );
+
+	colorChooseDialog.setTitle( title );
+
+	colorChooseDialog.addContent( colorChoosePanelContent );
+
+	return colorChooseDialog;
 
 }
