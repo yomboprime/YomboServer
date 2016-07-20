@@ -57,7 +57,7 @@ function init() {
 
 	socket.on( "ysAdminClientDisconnected", function( msg ) {
 
-		totalNumberOfClients++;
+		totalNumberOfClients--;
 
 	} );
 

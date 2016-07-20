@@ -16,7 +16,8 @@ if ( typeof module !== 'undefined' ) {
 // ***** Libraries *****
 
 var fs = require( 'fs' );
-var app = require( 'express' )();
+var express = require( 'express' );
+var app = express();
 var http = require( 'http' ).Server( app );
 var io = require( 'socket.io' )( http );
 
@@ -37,10 +38,14 @@ YomboServer.TheServer = function () {
 	this.servedRoutes = [];
 
 	// Resources
-	this.app = app;
 	this.fs = fs;
 	this.http = http;
+	this.app = app;
+	this.express = express;
 	this.io = io;
+
+	// Serve /public directory
+//	this.mapDirectory( '/public' );
 
 	// Listeners
 	this.listenerFunctionNames = [
@@ -495,6 +500,20 @@ YomboServer.TheServer.prototype.mapFile = function( path ) {
 			res.sendFile( __dirname + path );
 
 		} );
+
+	}
+
+};
+
+YomboServer.TheServer.prototype.mapDirectory = function( path ) {
+
+	var index = this.servedRoutes.indexOf( path );
+
+	if ( index < 0 ) {
+
+		this.servedRoutes.push( path );
+
+		this.app.use( path, this.express.static( __dirname + path ) );
 
 	}
 

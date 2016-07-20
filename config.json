@@ -16,7 +16,7 @@
             "enabled": true,
             "config": {
                 "room": "SharedBoardRoom",
-                "commandStorageClean": 200
+                "commandStorageClean": 500
             }
         },
         {

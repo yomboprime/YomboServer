@@ -9,10 +9,9 @@ var sharedboard = function() {
 	
 	this.currentToolState = {
 
-		selectedTool: sharedboard.toolList[ 4 ],
+		selectedTool: sharedboard.toolList[ 1 ],
 		strokeStyle: "black",
-		fillStyle: "black",
-		fillNoStroke: false,
+		fillStyle: "transparent",
 
 		currentCommand: null
 
@@ -32,7 +31,11 @@ sharedboard.commandList = [
 	{
 		name: "eraseboard",
 		paintFunction: function( ctx2d, width, height, cmd ) {
-			ctx2d.fillStyle = cmd.fillStyle;
+			var color = cmd.fillStyle;
+			if ( color === "transparent" ) {
+				color = "white";
+			}
+			ctx2d.fillStyle = color;
 			ctx2d.fillRect( 0, 0, width, height );
 		}
 	},
@@ -44,13 +47,7 @@ sharedboard.commandList = [
 			if ( numPoints === 0 ) {
 				return;
 			}
-			if ( cmd.fillNoStroke ) {
-				ctx2d.fillStyle = cmd.fillStyle;
-			}
-			else {
-				ctx2d.strokeStyle = cmd.strokeStyle;
-			}
-
+			ctx2d.strokeStyle = cmd.strokeStyle;
 			ctx2d.beginPath();
 			var point = points[ 0 ];
 			ctx2d.moveTo( point.x * width, point.y * height );
@@ -58,22 +55,17 @@ sharedboard.commandList = [
 				point = points[ i ];
 				ctx2d.lineTo( point.x * width, point.y * height );
 			}
-			if ( cmd.fillNoStroke ) {
-				ctx2d.fill();
-			}
-			else {
-				ctx2d.stroke();
-			}
+			ctx2d.stroke();
 		}
 	},
 	{
 		name: "rectangle",
 		paintFunction: function( ctx2d, width, height, cmd ) {
-			if ( cmd.fillNoStroke ) {
+			if ( cmd.fillStyle !== "transparent" ) {
 				ctx2d.fillStyle = cmd.fillStyle;
 				ctx2d.fillRect( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height );
 			}
-			else {
+			if ( cmd.strokeStyle !== "transparent" ) {
 				ctx2d.strokeStyle = cmd.strokeStyle;
 				ctx2d.strokeRect( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height );
 			}
@@ -82,13 +74,16 @@ sharedboard.commandList = [
 	{
 		name: "ellipse",
 		paintFunction: function( ctx2d, width, height, cmd ) {
-			if ( cmd.fillNoStroke ) {
+			if ( ! ctx2d.ellipse ) {
+				return;
+			}
+			if ( cmd.fillStyle !== "transparent" ) {
 				ctx2d.fillStyle = cmd.fillStyle;
 				ctx2d.beginPath();
 				ctx2d.ellipse( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height, 0, 0, 2 * Math.PI, false );
 				ctx2d.fill();
 			}
-			else {
+			if ( cmd.strokeStyle !== "transparent" ) {
 				ctx2d.strokeStyle = cmd.strokeStyle;
 				ctx2d.beginPath();
 				ctx2d.ellipse( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height, 0, 0, 2 * Math.PI, false );
@@ -142,7 +137,7 @@ sharedboard.toolList = [
 		guiStartFunction: function( sharedBoard, x, y ) {
 			var command = {
 				name: "eraseboard",
-				fillStyle: currentToolState.fillStyle
+				fillStyle: sharedBoard.currentToolState.fillStyle
 			};
 			sharedBoard.sendCommandArray( [ command ] );
 		},
@@ -216,7 +211,6 @@ sharedboard.toolList = [
 				name: "rectangle",
 				strokeStyle: ts.strokeStyle,
 				fillStyle: ts.fillStyle,
-				fillNoStroke: ts.fillNoStroke,
 				x: x,
 				y: y,
 				width: 0,
@@ -237,7 +231,6 @@ sharedboard.toolList = [
 				name: "ellipse",
 				strokeStyle: ts.strokeStyle,
 				fillStyle: ts.fillStyle,
-				fillNoStroke: ts.fillNoStroke,
 				x: x,
 				y: y,
 				width: 0,
@@ -282,7 +275,20 @@ sharedboard.toolList = [
 		guiEndFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		}
+	},
+	{
+		name: "file",
+		guiStartFunction: function( sharedBoard, x, y ) {
+			// Nothing to do
+		},
+		guiContinueFunction: function( sharedBoard, x, y ) {
+			// Nothing to do
+		},
+		guiEndFunction: function( sharedBoard, x, y ) {
+			// Nothing to do
+		}
 	}
+
 ];
 
 sharedboard.prototype.init = function( firstCanvas, presentationCanvas, socket, instanceName ) {
@@ -398,8 +404,17 @@ sharedboard.prototype.createPolylineCommand = function( x, y ) {
 		name: "polyline",
 		strokeStyle: ts.strokeStyle,
 		fillStyle: ts.fillStyle,
-		fillNoStroke: ts.fillNoStroke,
 		points: [ { x: x, y: y } ]
 	};
+
+};
+
+sharedboard.prototype.selectTool = function( toolIndex ) {
+
+	if ( toolIndex < 0 || toolIndex >= sharedboard.toolList.length ) {
+		return;
+	}
+
+	this.currentToolState.selectedTool = sharedboard.toolList[ toolIndex ];
 
 };
