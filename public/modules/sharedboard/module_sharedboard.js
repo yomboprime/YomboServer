@@ -93,6 +93,11 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 			var cmd = msg[ i ];
 
+			if ( cmd === null ) {
+				console.log( "Error: null command." );
+				continue;
+			}
+
 			if ( cmd.name === "eraseboard" ) {
 				scope.latestPaintCommands = [];
 			}

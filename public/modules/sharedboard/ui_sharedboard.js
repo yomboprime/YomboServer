@@ -40,7 +40,7 @@ function createToolbar( sharedBoard ) {
 
 	// Tool select button
 	var toolSelectButton = new sap.m.Button( {
-		icon: "/public/assets/icons/sharedboard/toolFreeDrawing.png",
+		icon: "/public/assets/icons/sharedboard/mejias/lapiz.png",
 		press: function() {
 
 			toolSelectMenu.open( false, null, "left top", "left bottom", toolSelectButton, "0 0", "fit" );
@@ -67,14 +67,14 @@ function createToolbar( sharedBoard ) {
 		items: [
 			new sap.ui.unified.MenuItem( {
 				text: "Free drawing",
-				icon: "/public/assets/icons/sharedboard/toolFreeDrawing.png",
+				icon: "/public/assets/icons/sharedboard/mejias/lapiz.png",
 				select: toolSelectFunction,
 				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 1 },
 				tooltip: "Free drawing tool."
 			} ),
 			new sap.ui.unified.MenuItem( {
 				text: "Line",
-				icon: "/public/assets/icons/sharedboard/toolLine.png",
+				icon: "/public/assets/icons/sharedboard/mejias/icono_linea.png",
 				select: toolSelectFunction,
 				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 2 },
 				tooltip: "Straight line tool."
@@ -94,8 +94,15 @@ function createToolbar( sharedBoard ) {
 				tooltip: "Ellipse tool."
 			} ),
 			new sap.ui.unified.MenuItem( {
+				text: "Eraser",
+				icon: "/public/assets/icons/sharedboard/mejias/goma.png",
+				select: toolSelectFunction,
+				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 5 },
+				tooltip: "Eraser tool."
+			} ),
+			new sap.ui.unified.MenuItem( {
 				text: "Flood fill",
-				icon: "/public/assets/icons/sharedboard/toolFloodFill.png",
+				icon: "/public/assets/icons/sharedboard/mejias/cubo_pintura.png",
 				select: toolSelectFunction,
 				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 5 },
 				tooltip: "Flood fill tool."
@@ -109,7 +116,7 @@ function createToolbar( sharedBoard ) {
 			} ),
 			new sap.ui.unified.MenuItem( {
 				text: "File",
-				icon: "/public/assets/icons/sharedboard/toolFile.png",
+				icon: "/public/assets/icons/sharedboard/mejias/archivo.png",
 				select: toolSelectFunction,
 				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 7 },
 				tooltip: "File send tool."
@@ -127,7 +134,7 @@ function createToolbar( sharedBoard ) {
 
 	var strokeColorButton = new sap.m.Button( {
 		press: function() {
-			colorChoosePanelStroke.open( false, null, "left top", "left bottom", strokeColorButton, "0 0", "fit" );
+			colorChoosePanelStroke.dialog.open( false, null, "left top", "left bottom", strokeColorButton, "0 0", "fit" );
 		},
 		tooltip: 'Set stroke color.'
 	} );
@@ -140,14 +147,28 @@ function createToolbar( sharedBoard ) {
 
 	var fillColorButton = new sap.m.Button( {
 		press: function() {
-			colorChoosePanelFill.open( false, null, "left top", "left bottom", fillColorButton, "0 0", "fit" );
+			colorChoosePanelFill.dialog.open( false, null, "left top", "left bottom", fillColorButton, "0 0", "fit" );
 		},
 		tooltip: 'Set fill color.'
 	} );
 
 	paintIconWithColor( canvasFillColor, fillColorButton, sharedBoard.currentToolState.fillStyle );
 
-	colorChoosePanelStroke = createColorChoosePanel( sharedBoard, "stroke", "Choose stroke color", function( color ) {
+	var storage = localStorage.colorPalette;
+	var colorPalette = null;
+	if ( storage ) {
+		colorPalette = JSON.parse( storage );
+	}
+
+	if ( ! colorPalette ) {
+
+		colorPalette = getDefaultColorPalette();
+
+		localStorage.colorPalette = JSON.stringify( colorPalette );
+
+	}
+
+	colorChoosePanelStroke = createColorChoosePanel( colorPalette, "stroke", "Choose stroke color", function( color ) {
 
 		sharedBoard.currentToolState.strokeStyle = color;
 
@@ -155,7 +176,7 @@ function createToolbar( sharedBoard ) {
 
 	} );
 
-	colorChoosePanelFill = createColorChoosePanel( sharedBoard, "fill", "Choose fill color", function( color ) {
+	colorChoosePanelFill = createColorChoosePanel( colorPalette, "fill", "Choose fill color", function( color ) {
 
 		sharedBoard.currentToolState.fillStyle = color;
 
@@ -165,15 +186,15 @@ function createToolbar( sharedBoard ) {
 
 	var toolbarItems = [
 		toolSelectButton,
+		strokeColorButton,
+		fillColorButton,
 		new sap.m.Button( {
-			icon: "/public/assets/icons/sharedboard/toolEraseBoard.png",
+			icon: "/public/assets/icons/sharedboard/trash/recyclebin_empty_48.png",
 			press: function() {
 				sharedboard.toolList[ 0 ].guiStartFunction( sharedBoard, 0, 0 );
 			},
 			tooltip: 'Erase all the board with fill color.'
-		} ),
-		strokeColorButton,
-		fillColorButton
+		} )
 	];
 
 	var toolbarContent = new sap.ui.layout.HorizontalLayout( "theToolbarContent", {
@@ -223,38 +244,18 @@ function paintIconWithColor( canvas, button, color ) {
 
 }
 
-function createColorChoosePanel( sharedBoard, id, title, onColorChanged ) {
-
-	var colorPalette = null;//localStorage.colorPalette;
-
-	if ( ! colorPalette ) {
-
-		colorPalette = [
-			[ "transparent", "#FF8080", "#FFFF80", "#80FF80", "#408040", "#80FFFF", "#8080FF", "#FF80FF" ],
-			[ "#FF0000", "#FF8000", "#FFFF00", "#00FF00", "#008000", "#00FFFF", "#0000FF", "#FF00FF" ],
-			[]
-		];
-
-		var j = colorPalette.length - 1;
-		for ( var i = 0; i < 8; i++ ) {
-			var gray = Math.floor( i * 255 / 7 );
-			colorPalette[ j ].push( "rgb(" + gray + ", " + gray + ", " + gray + ")" );
-		}
-
-		colorPalette.push( [ "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" ] );
-		colorPalette.push( [ "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" ] );
-
-		localStorage.colorPalette = colorPalette;
-
-	}
+function createColorChoosePanel( colorPalette, id, title, onColorChanged ) {
 
 	var canvasColorChoose = document.createElement( "canvas" );
 	canvasColorChoose.width = iconSize;
 	canvasColorChoose.height = iconSize;
 
-	var rowsItems = [];
+	var rowsLayouts = [];
+	var rows = [];
 
-	// Rows of colors
+	var lastColorButtonPressed = null;
+
+	// Create rows of color buttons
 	for ( var k = 0; k < colorPalette.length; k++ ) {
 
 		var rowColors = colorPalette[ k ];
@@ -272,11 +273,15 @@ function createColorChoosePanel( sharedBoard, id, title, onColorChanged ) {
 
 					onColorChanged( color );
 
-					// TODO remember last button pressed to modify its color from color chooser?
+					// Remember last button pressed to modify its color from color chooser
+					lastColorButtonPressed = button;
 
-				},
-				customData: { Type: "sap.ui.core.CustomData", key: "customColor", value: color }
+				}
 			} );
+
+			colorButton.data( "customColor", color );
+			colorButton.data( "customRow", k );
+			colorButton.data( "customColumn", i );
 
 			paintIconWithColor( canvasColorChoose, colorButton, color );
 
@@ -290,23 +295,129 @@ function createColorChoosePanel( sharedBoard, id, title, onColorChanged ) {
 			]
 		} );
 
-		rowsItems.push( rowHorizontalLayout );
+		rowsLayouts.push( rowHorizontalLayout );
+		rows.push( rowItems );
 	}
+
+	function updateColorButtonsFromPalette( rows ) {
+
+		for ( var k = 0; k < colorPalette.length; k++ ) {
+
+			var rowColors = colorPalette[ k ];
+
+			var rowItems = rows[ k ];
+
+			for ( var i = 0; i < rowColors.length; i++ ) {
+
+				var color = rowColors[ i ];
+
+				var colorButton = rowItems[ i ];
+
+				paintIconWithColor( canvasColorChoose, colorButton, color );
+
+				colorButton.data( "customColor", color );
+
+			}
+
+		}
+
+	}
+
+	updateColorButtonsFromPalette( rows );
 
 	// Color picker
 
 	var colorPicker = new sap.ui.commons.ColorPicker();
+	var lastColorPickerColor = "#000000";
 	var colorPickerFunction = function( oControlEvent ) {
 		var color = oControlEvent.getParameters().hex;
+		lastColorPickerColor = color;
 		onColorChanged( color );
 	};
 	colorPicker.attachChange( colorPickerFunction );
 	colorPicker.attachLiveChange( colorPickerFunction );
 
+	// Color picker related buttons
+
+	var storeColorInPaletteButton = new sap.m.Button( {
+		icon: "/public/assets/icons/sharedboard/paletteArrows/arrow_up.png",
+		press: function( oControlEvent ) {
+
+			if ( lastColorButtonPressed !== null ) {
+
+				var row = lastColorButtonPressed.data( "customRow" );
+				var column = lastColorButtonPressed.data( "customColumn" );
+
+				if ( row === 0 && column === 0 ) {
+					// Don't let change the transparent color
+					return;
+				}
+
+				colorPalette[ row ][ column ] = lastColorPickerColor;
+
+				localStorage.colorPalette = JSON.stringify( colorPalette );
+
+				updateColorButtonsFromPalette( colorChoosePanelStroke.rows );
+				updateColorButtonsFromPalette( colorChoosePanelFill.rows );
+
+				onColorChanged( lastColorPickerColor );
+
+			}
+
+		},
+		tooltip: "Set last selected palette entry to the color picker current color."
+	} );
+
+	var storePaletteInColorChooserButton = new sap.m.Button( {
+		icon: "/public/assets/icons/sharedboard/paletteArrows/arrow_down.png",
+		press: function( oControlEvent ) {
+
+			if ( lastColorButtonPressed !== null ) {
+
+				var row = lastColorButtonPressed.data( "customRow" );
+				var column = lastColorButtonPressed.data( "customColumn" );
+
+				var color = colorPalette[ row ][ column ];
+
+				colorPicker.setColorString( color );
+
+				colorPicker.rerender();
+
+				onColorChanged( color );
+
+			}
+
+		},
+		tooltip: "Set current picker color to the last selected palette entry color."
+	} );
+
+	var getColorFromBoard = new sap.m.Button( {
+		icon: "/public/assets/icons/sharedboard/cc/Inkscape_icons_color_picker.png",
+		press: function( oControlEvent ) {
+
+		},
+		tooltip: "Get a color by clicking on the board."
+	} );
+
+	var colorPickerVerticalLayout = new sap.ui.layout.VerticalLayout( "theColorChooseVerticalLayout_" + id, {
+		content: [
+			storeColorInPaletteButton,
+			storePaletteInColorChooserButton,
+			getColorFromBoard
+		]
+	} );
+
+	var colorPickerHorizontalLayout = new sap.ui.layout.HorizontalLayout( "theColorChooseHorizontalLayout_" + id, {
+		content: [
+			colorPicker,
+			colorPickerVerticalLayout
+		]
+	} );
+
 	var colorChoosePanelContent = new sap.ui.layout.VerticalLayout( "theColorChoosePanelContent_" + id, {
 		content: [
-			rowsItems,
-			colorPicker
+			rowsLayouts,
+			colorPickerHorizontalLayout
 		]
 	} );
 
@@ -325,6 +436,33 @@ function createColorChoosePanel( sharedBoard, id, title, onColorChanged ) {
 
 	colorChooseDialog.addContent( colorChoosePanelContent );
 
-	return colorChooseDialog;
+	return {
+		dialog: colorChooseDialog,
+		rows: rows
+	};
 
 }
+
+function getDefaultColorPalette() {
+
+	var colorPalette = [
+		[ "transparent", "#FF8080", "#FFFF80", "#80FF80", "#408040", "#80FFFF", "#8080FF", "#FF80FF" ],
+		[ "#FF0000", "#FF8000", "#FFFF00", "#00FF00", "#008000", "#00FFFF", "#0000FF", "#FF00FF" ],
+		[]
+	];
+
+	var j = colorPalette.length - 1;
+	for ( var i = 0; i < 8; i++ ) {
+		var gray = Math.floor( i * 255 / 7 );
+		colorPalette[ j ].push( "rgb(" + gray + ", " + gray + ", " + gray + ")" );
+	}
+
+	colorPalette.push( [ "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" ] );
+	colorPalette.push( [ "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF" ] );
+
+	return colorPalette;
+
+}
+
+
+// 56 122 255
