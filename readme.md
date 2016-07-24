@@ -121,4 +121,3 @@ V - client canvas is resizable
 
  - multi-user undo of N steps: must use the client cache previously mentioned
 
-ctx.fillStyle = "rgb(200,0,0)";

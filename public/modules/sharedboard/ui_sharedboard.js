@@ -170,7 +170,7 @@ function createToolbar( sharedBoard ) {
 
 	colorChoosePanelStroke = createColorChoosePanel( colorPalette, "stroke", "Choose stroke color", function( color ) {
 
-		sharedBoard.currentToolState.strokeStyle = color;
+		sharedBoard.setCurrentStrokeColor( color );
 
 		paintIconWithColor( canvasStrokeColor, strokeColorButton, color );
 
@@ -178,7 +178,7 @@ function createToolbar( sharedBoard ) {
 
 	colorChoosePanelFill = createColorChoosePanel( colorPalette, "fill", "Choose fill color", function( color ) {
 
-		sharedBoard.currentToolState.fillStyle = color;
+		sharedBoard.setCurrentFillColor( color );
 
 		paintIconWithColor( canvasFillColor, fillColorButton, color );
 
@@ -234,6 +234,12 @@ function paintIconWithColor( canvas, button, color ) {
 	if ( color === "transparent" ) {
 		ctx2d.fillStyle = "white";
 		ctx2d.fillRect( 0, 0 , canvas.width, canvas.height );
+
+		ctx2d.font = "30px Times New Roman";
+		ctx2d.textAlign = "center";
+		ctx2d.fillStyle = "black";
+		ctx2d.fillText( "T", iconSize * 0.5, iconSize * 0.7 );
+
 	}
 	else {
 		ctx2d.fillStyle = color;
@@ -394,7 +400,7 @@ function createColorChoosePanel( colorPalette, id, title, onColorChanged ) {
 	var getColorFromBoard = new sap.m.Button( {
 		icon: "/public/assets/icons/sharedboard/cc/Inkscape_icons_color_picker.png",
 		press: function( oControlEvent ) {
-
+			uiColorPicker = colorPicker;
 		},
 		tooltip: "Get a color by clicking on the board."
 	} );
@@ -464,5 +470,197 @@ function getDefaultColorPalette() {
 
 }
 
+function createTextToolDialog( sharedBoard ) {
+
+	// Font family combo box
+
+	var fontFamilies = sharedboard.getTextFontFamilyList();
+	
+	var fontFamilyData = [];
+	
+	for ( var i = 0, il = fontFamilies.length; i < il; i++ ) {
+		
+		fontFamilyData.push( { name: fontFamilies[ i ] } );
+		
+	}
+
+	var model = new sap.ui.model.json.JSONModel( {
+
+		fontFamilyData: fontFamilyData
+		
+	} );
+	sap.ui.getCore().setModel( model );
+
+
+	var fontFamilyCombo = new sap.m.ComboBox( {
+		items : {
+		path : "/fontFamilyData",
+			template : new sap.ui.core.ListItem( {
+				key: "{name}",
+				text: "{name}"
+			} )
+		},
+		selectionChange: function() {
+			
+			refreshTextToolDialogCommand( sharedBoard, textToolDialogObject );
+
+			//var model = sap.ui.getCore().getModel();
+			//model.setProperty('/selected', obj.text);
+		}
+	} );
+
+	fontFamilyCombo.setSelectedKey( fontFamilies[ 0 ] );
+	fontFamilyCombo.setTooltip( "Select font family" );
+
+	// Text size text edit field
+
+	var textSizeTextField = new sap.ui.commons.TextField();
+	textSizeTextField.attachChange( function( oControlEvent ) {
+
+		refreshTextToolDialogCommand( sharedBoard, textToolDialogObject );
+		
+	} );
+	textSizeTextField.setWidth( "129px" );
+	textSizeTextField.setValue( 20 );
+	var textSizeWidget = createDialogLabelForWidget( "Text height (pixels): ", textSizeTextField );
+
+	// Italic checkbox
+
+	var italicCheckbox = new sap.ui.commons.CheckBox( { text: "Italic" } );
+	italicCheckbox.attachChange( function( oControlEvent ) {
+
+		refreshTextToolDialogCommand( sharedBoard, textToolDialogObject );
+
+	} );
+
+	// Bold checkbox
+
+	var boldCheckbox = new sap.ui.commons.CheckBox( { text: "Bold" } );
+	boldCheckbox.attachChange( function( oControlEvent ) {
+
+		refreshTextToolDialogCommand( sharedBoard, textToolDialogObject );
+
+	} );
+
+	// Text area
+
+	var textArea = new sap.ui.commons.TextArea();
+	textArea.setCols( 28 );
+	textArea.setRows( 5 );
+	textArea.attachLiveChange( function( oControlEvent ) {
+
+		refreshTextToolDialogCommand( sharedBoard, textToolDialogObject, oControlEvent.getParameters().liveValue );
+
+	} );
+
+	var textToolPanelContent = new sap.ui.layout.VerticalLayout( "theTextToolPanelContent", {
+		content: [
+			fontFamilyCombo,
+			textSizeWidget,
+			italicCheckbox,
+			boldCheckbox,
+			textArea
+		]
+	} );
+
+	var textToolDialog = new sap.ui.commons.Dialog();
+
+	textToolDialog.setWidth( "255px" );
+    textToolDialog.setHeight( "315px" );
+    textToolDialog.addStyleClass( "unselectable" );
+    textToolDialog.setKeepInWindow( true );
+
+    textToolDialog.attachClosed( function() {
+        // TODO (when needed)
+    } );
+
+	textToolDialog.setTitle( "Enter text and style" );
+
+	textToolDialog.addContent( textToolPanelContent );
+
+	textToolDialog.addButton( new sap.ui.commons.Button( {
+        text: "Cancel",
+        press: function() {
+			sharedBoard.currentToolState.currentCommand = null;
+			textToolDialog.close();
+			sharedBoard.blit();
+		}
+    } ) );
+
+	textToolDialog.addButton( new sap.ui.commons.Button( {
+        text: "Accept",
+        press: function() {
+            var cmd = sharedBoard.currentToolState.currentCommand;
+			if ( cmd ) {
+				sharedBoard.guiEndCommand( cmd.x, cmd.y );
+				textToolDialog.close();
+			}
+		}
+    } ) );
+
+
+	var textToolDialogObject = {
+		dialog: textToolDialog,
+		fontFamilyCombo: fontFamilyCombo,
+		textSizeTextField: textSizeTextField,
+		italicCheckbox: italicCheckbox,
+		boldCheckbox: boldCheckbox,
+		textArea: textArea
+	};
+
+	return textToolDialogObject;
+
+}
+
+function createDialogLabelForWidget( labelString, widget ) {
+
+    // Returns a horizontal layout containing the label and the widget
+
+    return new sap.ui.layout.HorizontalLayout( {
+        content: [
+            new sap.ui.commons.TextView( { text: labelString } ),
+            widget
+        ]
+    } );
+
+};
+
+function refreshTextToolDialogCommand( sharedBoard, textToolDialogObject, liveText ) {
+
+	var cmd = sharedBoard.currentToolState.currentCommand;
+	if ( cmd ) {
+
+		var selObj = textToolDialog.fontFamilyCombo.getSelectedItem().getBindingContext().getObject();
+		if ( selObj ) {
+			cmd.fontFamily = selObj.name;
+		}
+
+
+		var v = textToolDialog.textSizeTextField.getValue();
+		var value = new Number( v );
+		if ( Number.isNaN( value ) ) {
+			return;
+		}
+		value = Math.floor( value );
+		if ( 1000 < value ) {
+			value = 1000;
+		}
+		if ( 1 > value ) {
+			value = 1;
+		}
+		textToolDialog.textSizeTextField.setValue( value );
+		cmd.fontSize = value;
+
+		cmd.italic = textToolDialog.italicCheckbox.getChecked();
+
+		cmd.bold = textToolDialog.boldCheckbox.getChecked();
+
+		cmd.text = liveText || textToolDialog.textArea.getValue();
+
+		sharedBoard.guiContinueCommand( cmd.x, cmd.y );
+
+	}
+
+}
 
 // 56 122 255

@@ -16,6 +16,10 @@ var sharedBoard = null;
 // UI elements
 var contextMenu = null;
 var toolbar = null;
+var textToolDialog = null;
+
+var uiColorPicker = null;
+
 
 // Wait for gui library to load and then init application
 sap.ui.getCore().attachInit( function() {
@@ -35,6 +39,7 @@ function init() {
 	// Create UI
 	contextMenu = createContextMenu();
 	toolbar = createToolbar( sharedBoard );
+	textToolDialog = createTextToolDialog( sharedBoard );
 
 	sharedBoard.init( firstCanvas, presentationCanvas, socket, "thesharedboard" );
 
@@ -86,7 +91,22 @@ function onMouseDown( event ) {
 	var x = event.clientX / presentationCanvas.width;
 	var y = event.clientY / presentationCanvas.height;
 
-	sharedBoard.guiStartCommand( x, y );
+	if ( uiColorPicker ) {
+
+		pickColor( x, y, true );
+
+	}
+	else {
+
+		sharedBoard.guiStartCommand( x, y );
+
+		if ( sharedBoard.currentToolState.selectedTool.name === "text" ) {
+
+			showTextToolDialog();
+
+		}
+
+	}
 
 }
 
@@ -101,7 +121,20 @@ function onMouseMove( event ) {
 	var x = event.clientX / presentationCanvas.width;
 	var y = event.clientY / presentationCanvas.height;
 
-	sharedBoard.guiContinueCommand( x, y );
+	if ( uiColorPicker ) {
+
+		pickColor( x, y, false );
+
+	}
+	else {
+
+		if ( sharedBoard.currentToolState.selectedTool.name !== "text" ) {
+
+			sharedBoard.guiContinueCommand( x, y );
+
+		}
+
+	}
 
 }
 
@@ -113,10 +146,14 @@ function onMouseUp( event ) {
 		
 	}
 
-	var x = event.clientX / presentationCanvas.width;
-	var y = event.clientY / presentationCanvas.height;
+	if ( sharedBoard.currentToolState.selectedTool.name !== "text" ) {
 
-	sharedBoard.guiEndCommand( x, y );
+		var x = event.clientX / presentationCanvas.width;
+		var y = event.clientY / presentationCanvas.height;
+
+		sharedBoard.guiEndCommand( x, y );
+
+	}
 
 }
 
@@ -131,5 +168,42 @@ function showToolbar() {
 
 	toolbar.close();
 	toolbar.open();
+
+}
+
+function showTextToolDialog() {
+
+	textToolDialog.dialog.open();
+
+	refreshTextToolDialogCommand( sharedBoard, textToolDialog );
+
+}
+
+
+function pickColor( x, y, store ) {
+
+	if ( ! uiColorPicker ) {
+		return;
+	}
+
+	var color = getPixelFromCanvas( x * firstCanvas.width, y * firstCanvas.height, firstCanvas );
+
+	uiColorPicker.setColorString( color );
+	uiColorPicker.rerender();
+
+	if ( store ) {
+		uiColorPicker = null;
+	}
+
+}
+
+function getPixelFromCanvas( x, y, canvas ) {
+
+	var ctx = canvas.getContext( "2d" );
+
+	var canvasData = ctx.getImageData( x, y, 1, 1 );
+    var pixelData = canvasData.data;
+
+	return "rgb(" + pixelData[ 0 ] + ", " + pixelData[ 1 ] + ", " + pixelData[ 2 ] + ")";
 
 }

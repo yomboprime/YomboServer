@@ -90,6 +90,33 @@ sharedboard.commandList = [
 				ctx2d.stroke();
 			}
 		}
+	},
+	{
+		name: "text",
+		paintFunction: function( ctx2d, width, height, cmd ) {
+			var fontSize = cmd.fontSize;
+			var font = sharedboard.getTextFontSpecifier( cmd.fontFamily, fontSize, cmd.italic, cmd.bold );
+			ctx2d.font = font;
+			var lines = cmd.text.split( "\n" );
+			if ( cmd.fillStyle !== "transparent" ) {
+				var x = cmd.x * width;
+				var y = cmd.y * height;
+				ctx2d.fillStyle = cmd.fillStyle;
+				for ( var i = 0, il = lines.length; i < il; i++ ) {
+					ctx2d.fillText( lines[ i ], x, y );
+					y += fontSize;
+				}
+			}
+			if ( cmd.strokeStyle !== "transparent" ) {
+				var x = cmd.x * width;
+				var y = cmd.y * height;
+				ctx2d.strokeStyle = cmd.strokeStyle;
+				for ( var i = 0, il = lines.length; i < il; i++ ) {
+					ctx2d.strokeText( lines[ i ], x, y );
+					y += fontSize;
+				}
+			}
+		}
 	}
 ];
 
@@ -98,6 +125,32 @@ for ( var i = 0, il = sharedboard.commandList.length; i < il; i++ ) {
 	var cmd = sharedboard.commandList[ i ];
 	sharedboard.commandHash[ cmd.name ] = cmd;
 }
+
+sharedboard.getTextFontFamilyList = function() {
+
+	return [
+		"Arial",
+		"Courier New",
+		"Georgia",
+		"Times New Roman",
+		"Verdana"
+	];
+
+};
+
+sharedboard.getTextFontSpecifier = function( fontFamily, fontSize, italic, bold ) {
+
+	var font = italic ? "italic " : "";
+
+	if ( bold ) {
+		font += "bolder ";
+	}
+
+	font += fontSize + "px " + fontFamily;
+
+	return font;
+
+};
 
 sharedboard.commonGuiContinueFunction = function( sharedBoard, x, y ) {
 
@@ -267,13 +320,29 @@ sharedboard.toolList = [
 	{
 		name: "text",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			var ts = sharedBoard.currentToolState;
+			ts.currentCommand = {
+				name: "text",
+				fontSize: 10,
+				fontFamily: "Arial",
+				italic: false,
+				bold: false,
+				strokeStyle: ts.strokeStyle,
+				fillStyle: ts.fillStyle,
+				text: "",
+				x: x,
+				y: y
+			};
 		},
 		guiContinueFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			sharedBoard.drawLocal( sharedBoard.currentToolState.currentCommand );
 		},
 		guiEndFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			var currentCommand = sharedBoard.currentToolState.currentCommand;
+			if ( currentCommand ) {
+				sharedBoard.sendCommandArray( [ currentCommand ] );
+				sharedBoard.currentToolState.currentCommand = null;
+			}
 		}
 	},
 	{
@@ -335,7 +404,9 @@ sharedboard.prototype.guiContinueCommand = function( x, y ) {
 
 sharedboard.prototype.guiEndCommand = function( x, y ) {
 
-	this.currentToolState.selectedTool.guiEndFunction( this, x, y );
+	if ( this.guiStateDown ) {
+		this.currentToolState.selectedTool.guiEndFunction( this, x, y );
+	}
 
 	this.guiStateDown = false;
 
@@ -416,5 +487,37 @@ sharedboard.prototype.selectTool = function( toolIndex ) {
 	}
 
 	this.currentToolState.selectedTool = sharedboard.toolList[ toolIndex ];
+
+};
+
+sharedboard.prototype.setCurrentStrokeColor = function( color ) {
+
+	this.currentToolState.strokeStyle = color;
+
+	var cmd = this.currentToolState.currentCommand;
+
+	if ( cmd ) {
+
+		cmd.strokeStyle = color;
+
+		sharedBoard.guiContinueCommand( cmd.x, cmd.y );
+
+	}
+
+};
+
+sharedboard.prototype.setCurrentFillColor = function( color ) {
+
+	this.currentToolState.fillStyle = color;
+
+	var cmd = this.currentToolState.currentCommand;
+
+	if ( cmd ) {
+
+		cmd.fillStyle = color;
+
+		sharedBoard.guiContinueCommand( cmd.x, cmd.y );
+
+	}
 
 };
