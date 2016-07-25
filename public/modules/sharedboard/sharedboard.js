@@ -12,6 +12,7 @@ var sharedboard = function() {
 		selectedTool: sharedboard.toolList[ 1 ],
 		strokeStyle: "black",
 		fillStyle: "transparent",
+		lineWidth: 1,
 
 		currentCommand: null
 
@@ -48,6 +49,7 @@ sharedboard.commandList = [
 				return;
 			}
 			ctx2d.strokeStyle = cmd.strokeStyle;
+			ctx2d.lineWidth = cmd.lineWidth;
 			ctx2d.beginPath();
 			var point = points[ 0 ];
 			ctx2d.moveTo( point.x * width, point.y * height );
@@ -152,7 +154,11 @@ sharedboard.getTextFontSpecifier = function( fontFamily, fontSize, italic, bold 
 
 };
 
-sharedboard.commonGuiContinueFunction = function( sharedBoard, x, y ) {
+sharedboard.commonGuiContinueFunction = function( sharedBoard, x, y, down ) {
+
+	if ( sharedboard.drawPointerCircle( sharedBoard, x, y, down ) ) {
+		return;
+	}
 
 	var ts = sharedBoard.currentToolState;
 	var x0 = ts.x0;
@@ -184,6 +190,35 @@ sharedboard.commonGuiEndFunction = function( sharedBoard, x, y ) {
 
 };
 
+sharedboard.drawPointerCircle = function( sharedBoard, x, y, down, lineWidthScale ) {
+
+	if ( ! down ) {
+
+		sharedBoard.blit();
+
+		lineWidthScale = lineWidthScale || 1;
+
+		var canvas = sharedBoard.presentationCanvas;
+		var ctx2d = canvas.getContext( "2d" );
+		sharedboard.strokeCircle( ctx2d, x * canvas.width, y * canvas.height, sharedBoard.currentToolState.lineWidth * 0.5 * lineWidthScale, sharedBoard.currentToolState.strokeStyle );
+
+		return true;
+	}
+
+	return false;
+
+};
+
+sharedboard.strokeCircle = function( ctx2d, x, y, radius, color ) {
+
+	ctx2d.fillStyle = color;
+	ctx2d.beginPath();
+	ctx2d.arc( x, y, radius, 0, 2 * Math.PI, false );
+	ctx2d.fill();
+	ctx2d.closePath();
+
+};
+
 sharedboard.toolList = [
 	{
 		name: "eraseboard",
@@ -194,7 +229,7 @@ sharedboard.toolList = [
 			};
 			sharedBoard.sendCommandArray( [ command ] );
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
 			// Nothing to do
 		},
 		guiEndFunction: function( sharedBoard, x, y ) {
@@ -204,14 +239,18 @@ sharedboard.toolList = [
 	{
 		name: "freeDrawing",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y );
+			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y, sharedBoard.currentToolState.lineWidth, sharedBoard.currentToolState.strokeStyle );
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
+			if ( sharedboard.drawPointerCircle( sharedBoard, x, y, down ) ) {
+				return;
+			}
+
 			var currentCommand = sharedBoard.currentToolState.currentCommand;
 			currentCommand.points.push( { x: x, y: y } );
 			if ( currentCommand.points.length >= 10 ) {
 				sharedBoard.sendCommandArray( [ currentCommand ] );
-				sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y );
+				sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y, sharedBoard.currentToolState.lineWidth, sharedBoard.currentToolState.strokeStyle );
 			}
 			else {
 				sharedBoard.drawLocal( currentCommand );
@@ -227,9 +266,12 @@ sharedboard.toolList = [
 	{
 		name: "line",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y );
+			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y, sharedBoard.currentToolState.lineWidth, sharedBoard.currentToolState.strokeStyle );
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
+			if ( sharedboard.drawPointerCircle( sharedBoard, x, y, down ) ) {
+				return;
+			}
 			var points = sharedBoard.currentToolState.currentCommand.points;
 			if ( points.length < 2 ) {
 				points.push( { x: x, y: y } );
@@ -264,6 +306,7 @@ sharedboard.toolList = [
 				name: "rectangle",
 				strokeStyle: ts.strokeStyle,
 				fillStyle: ts.fillStyle,
+				lineWidth: ts.lineWidth,
 				x: x,
 				y: y,
 				width: 0,
@@ -284,6 +327,7 @@ sharedboard.toolList = [
 				name: "ellipse",
 				strokeStyle: ts.strokeStyle,
 				fillStyle: ts.fillStyle,
+				lineWidth: ts.lineWidth,
 				x: x,
 				y: y,
 				width: 0,
@@ -291,7 +335,10 @@ sharedboard.toolList = [
 			};
 
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
+			if ( sharedboard.drawPointerCircle( sharedBoard, x, y, down ) ) {
+				return;
+			}
 			var ts = sharedBoard.currentToolState;
 			var x0 = ts.x0;
 			var y0 = ts.y0;
@@ -306,11 +353,46 @@ sharedboard.toolList = [
 		guiEndFunction: sharedboard.commonGuiEndFunction
 	},
 	{
+		name: "eraser",
+		guiStartFunction: function( sharedBoard, x, y ) {
+			var color = sharedBoard.currentToolState.fillStyle;
+			if ( color === "transparent" ) {
+				color = "white";
+			}
+			sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y, sharedBoard.currentToolState.lineWidth * 3, color );
+		},
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
+			if ( sharedboard.drawPointerCircle( sharedBoard, x, y, down, 3 ) ) {
+				return;
+			}
+
+			var currentCommand = sharedBoard.currentToolState.currentCommand;
+			currentCommand.points.push( { x: x, y: y } );
+			if ( currentCommand.points.length >= 10 ) {
+				sharedBoard.sendCommandArray( [ currentCommand ] );
+				var color = sharedBoard.currentToolState.fillStyle;
+				if ( color === "transparent" ) {
+					color = "white";
+				}
+				sharedBoard.currentToolState.currentCommand = sharedBoard.createPolylineCommand( x, y, sharedBoard.currentToolState.lineWidth * 3, color );
+			}
+			else {
+				sharedBoard.drawLocal( currentCommand );
+			}
+		},
+		guiEndFunction: function( sharedBoard, x, y ) {
+			var currentCommand = sharedBoard.currentToolState.currentCommand;
+			currentCommand.points.push( { x: x, y: y } );
+			sharedBoard.sendCommandArray( [ currentCommand ] );
+			sharedBoard.currentToolState.currentCommand = null;
+		}
+	},
+	{
 		name: "floodfill",
 		guiStartFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
 			// Nothing to do
 		},
 		guiEndFunction: function( sharedBoard, x, y ) {
@@ -334,7 +416,7 @@ sharedboard.toolList = [
 				y: y
 			};
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
 			sharedBoard.drawLocal( sharedBoard.currentToolState.currentCommand );
 		},
 		guiEndFunction: function( sharedBoard, x, y ) {
@@ -350,7 +432,7 @@ sharedboard.toolList = [
 		guiStartFunction: function( sharedBoard, x, y ) {
 			// Nothing to do
 		},
-		guiContinueFunction: function( sharedBoard, x, y ) {
+		guiContinueFunction: function( sharedBoard, x, y, down ) {
 			// Nothing to do
 		},
 		guiEndFunction: function( sharedBoard, x, y ) {
@@ -394,11 +476,7 @@ sharedboard.prototype.guiStartCommand = function( x, y ) {
 
 sharedboard.prototype.guiContinueCommand = function( x, y ) {
 
-	if ( ! this.guiStateDown ) {
-		return;
-	}
-
-	this.currentToolState.selectedTool.guiContinueFunction( this, x, y );
+	this.currentToolState.selectedTool.guiContinueFunction( this, x, y, this.guiStateDown );
 
 };
 
@@ -412,11 +490,11 @@ sharedboard.prototype.guiEndCommand = function( x, y ) {
 
 };
 
-sharedboard.prototype.drawLocal = function() {
+sharedboard.prototype.drawLocal = function( command ) {
 
 	this.blit();
 
-	this.executeCommandArray( this.presentationCanvas, [ this.currentToolState.currentCommand ] );
+	this.executeCommandArray( this.presentationCanvas, [ command ] );
 
 };
 
@@ -467,14 +545,15 @@ sharedboard.prototype.blit = function() {
 
 };
 
-sharedboard.prototype.createPolylineCommand = function( x, y ) {
+sharedboard.prototype.createPolylineCommand = function( x, y, lineWidth, strokeStyle ) {
 
 	var ts = this.currentToolState;
 
 	return {
 		name: "polyline",
-		strokeStyle: ts.strokeStyle,
+		strokeStyle: strokeStyle,
 		fillStyle: ts.fillStyle,
+		lineWidth: lineWidth,
 		points: [ { x: x, y: y } ]
 	};
 

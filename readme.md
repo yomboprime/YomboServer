@@ -106,7 +106,7 @@ Multi videochat with shared drawing board, ... think more ideas:
     V - Rectangle
     V - Ellipse (not implemented in Firefox)
     - Flood fill
-    - Text
+    V - Text
 
     - Image (select rectangle and then pop-up to select file)
     - First select rectangle, or click to cover all the board. 3d file (front/side/up/back/otherside/bottom/up to 4 of them) (.stl, .obj, .dae). Put a check to override material with color.

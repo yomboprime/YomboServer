@@ -38,7 +38,12 @@ function init() {
 
 	// Create UI
 	contextMenu = createContextMenu();
-	toolbar = createToolbar( sharedBoard );
+	toolbar = createToolbar( sharedBoard, function( selectedTool ) {
+		if ( selectedTool.name !== "text" ) {
+			textToolDialog.dialog.close();
+			sharedBoard.blit();
+		}
+	} );
 	textToolDialog = createTextToolDialog( sharedBoard );
 
 	sharedBoard.init( firstCanvas, presentationCanvas, socket, "thesharedboard" );

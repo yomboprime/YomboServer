@@ -36,7 +36,7 @@ function createContextMenu() {
 
 }
 
-function createToolbar( sharedBoard ) {
+function createToolbar( sharedBoard, onToolSelected ) {
 
 	// Tool select button
 	var toolSelectButton = new sap.m.Button( {
@@ -57,6 +57,8 @@ function createToolbar( sharedBoard ) {
 		sharedBoard.selectTool( toolIndex );
 
 		toolSelectButton.setIcon( button.getIcon() );
+
+		onToolSelected( sharedBoard.currentToolState.selectedTool );
 
 	}
 
@@ -184,6 +186,34 @@ function createToolbar( sharedBoard ) {
 
 	} );
 
+	var confirmClearBoardDialog = new sap.ui.commons.Dialog();
+	confirmClearBoardDialog.setWidth( "200px" );
+    confirmClearBoardDialog.setHeight( "90px" );
+    confirmClearBoardDialog.addStyleClass( "unselectable" );
+    confirmClearBoardDialog.setKeepInWindow( true );
+	confirmClearBoardDialog.setModal( true );
+	confirmClearBoardDialog.setTitle( "Confirm clear board" );
+	confirmClearBoardDialog.addButton( new sap.ui.commons.Button( {
+        text: "Cancel",
+        press: function() {
+
+			confirmClearBoardDialog.close();
+			
+		}
+    } ) );
+	confirmClearBoardDialog.addButton( new sap.ui.commons.Button( {
+        text: "Confirm",
+        press: function() {
+
+			// Issue "Clear the board" command
+			sharedboard.toolList[ 0 ].guiStartFunction( sharedBoard, 0, 0 );
+
+			confirmClearBoardDialog.close();
+
+		}
+    } ) );
+
+
 	var toolbarItems = [
 		toolSelectButton,
 		strokeColorButton,
@@ -191,7 +221,7 @@ function createToolbar( sharedBoard ) {
 		new sap.m.Button( {
 			icon: "/public/assets/icons/sharedboard/trash/recyclebin_empty_48.png",
 			press: function() {
-				sharedboard.toolList[ 0 ].guiStartFunction( sharedBoard, 0, 0 );
+				confirmClearBoardDialog.open();
 			},
 			tooltip: 'Erase all the board with fill color.'
 		} )
