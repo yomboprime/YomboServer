@@ -213,11 +213,34 @@ function createToolbar( sharedBoard, onToolSelected ) {
 		}
     } ) );
 
+	// Line width icon
+
+	var lineWidthDialog = createLineWidthDialog( sharedBoard );
+
+	var lineWidthButton = new sap.m.Button( {
+		press: function() {
+			lineWidthDialog.dialog.open( false, null, "left top", "left bottom", lineWidthButton, "0 0", "fit" );
+		},
+		tooltip: 'Set line width'
+	} );
+
+	var canvasLineWidth = document.createElement( "canvas" );
+	canvasLineWidth.width = iconSize;
+	canvasLineWidth.height = iconSize;
+
+	lineWidthDialog.canvasLineWidth = canvasLineWidth;
+	lineWidthDialog.lineWidthButton = lineWidthButton;
+
+	paintLineWidthIcon( canvasLineWidth, lineWidthButton, lineWidthDialog.lineWidthSlider.getValue() );
+
+
+	// Create toolbar items and the toolbar dialog
 
 	var toolbarItems = [
 		toolSelectButton,
 		strokeColorButton,
 		fillColorButton,
+		lineWidthButton,
 		new sap.m.Button( {
 			icon: "/public/assets/icons/sharedboard/trash/recyclebin_empty_48.png",
 			press: function() {
@@ -265,16 +288,43 @@ function paintIconWithColor( canvas, button, color ) {
 		ctx2d.fillStyle = "white";
 		ctx2d.fillRect( 0, 0 , canvas.width, canvas.height );
 
-		ctx2d.font = "30px Times New Roman";
-		ctx2d.textAlign = "center";
-		ctx2d.fillStyle = "black";
-		ctx2d.fillText( "T", iconSize * 0.5, iconSize * 0.7 );
+		ctx2d.fillStyle = "#808080";
 
+		var n = 6;
+		var d = iconSize / n;
+		for ( var j = 0; j < 6; j++ ) {
+			for ( var i = 0; i < 6; i++ ) {
+				if ( ( i + j ) & 1 ) {
+					ctx2d.fillRect( i * d, j * d, d, d );
+				}
+			}
+		}
 	}
 	else {
 		ctx2d.fillStyle = color;
 		ctx2d.fillRect( 0, 0 , canvas.width, canvas.height );
 	}
+
+	setCanvasAsButtonIcon( button, canvas );
+
+}
+
+function paintLineWidthIcon( canvas, button, lineWidth ) {
+
+	var ctx2d = canvas.getContext( "2d" );
+	ctx2d.fillStyle = "white";
+	ctx2d.fillRect( 0, 0 , canvas.width, canvas.height );
+
+	ctx2d.fillStyle = "black";
+	var d = Math.min( 40, lineWidth );
+	ctx2d.fillRect( canvas.width * 0.5 - d * 0.5, 25 , d, 12 );
+
+/*kk
+		ctx2d.font = "12px Times New Roman";
+		ctx2d.textAlign = "center";
+		ctx2d.fillStyle = "black";
+		ctx2d.fillText( "Line width", iconSize * 0.5, iconSize * 0.7 );
+*/
 
 	setCanvasAsButtonIcon( button, canvas );
 
@@ -601,7 +651,9 @@ function createTextToolDialog( sharedBoard ) {
     textToolDialog.setKeepInWindow( true );
 
     textToolDialog.attachClosed( function() {
-        // TODO (when needed)
+        sharedBoard.currentToolState.currentCommand = null;
+		textToolDialog.close();
+		sharedBoard.blit();
     } );
 
 	textToolDialog.setTitle( "Enter text and style" );
@@ -611,9 +663,7 @@ function createTextToolDialog( sharedBoard ) {
 	textToolDialog.addButton( new sap.ui.commons.Button( {
         text: "Cancel",
         press: function() {
-			sharedBoard.currentToolState.currentCommand = null;
 			textToolDialog.close();
-			sharedBoard.blit();
 		}
     } ) );
 
@@ -693,4 +743,57 @@ function refreshTextToolDialogCommand( sharedBoard, textToolDialogObject, liveTe
 
 }
 
-// 56 122 255
+function createLineWidthDialog( sharedBoard ) {
+
+	var lineWidthSlider = new sap.ui.commons.Slider( {
+		min: 1,
+		max: 20,
+		smallStepWidth: 1,
+		stepLabels: true,
+		totalUnits: 5,
+		value: 1,
+		vertical: true,
+		width: "50px",
+		height: "200px"
+	} );
+
+	lineWidthSlider.attachLiveChange( function() {
+
+		var lineWidth = lineWidthSlider.getValue();
+
+		sharedBoard.setCurrentLineWidth( lineWidth );
+
+		paintLineWidthIcon( lineWidthDialogObject.canvasLineWidth, lineWidthDialogObject.lineWidthButton, lineWidth );
+
+	} );
+
+
+	var lineWidthPanelContent = new sap.ui.layout.VerticalLayout( "theLineWidthPanelContent", {
+		content: [
+			lineWidthSlider
+		]
+	} );
+
+	var lineWidthDialog = new sap.ui.commons.Dialog();
+
+	lineWidthDialog.setWidth( "105px" );
+    lineWidthDialog.setHeight( "280px" );
+    lineWidthDialog.addStyleClass( "unselectable" );
+    lineWidthDialog.setKeepInWindow( true );
+
+    lineWidthDialog.attachClosed( function() {
+        // TODO (when needed)
+    } );
+
+	lineWidthDialog.setTitle( "Width" );
+
+	lineWidthDialog.addContent( lineWidthPanelContent );
+
+	var lineWidthDialogObject = {
+		dialog: lineWidthDialog,
+		lineWidthSlider: lineWidthSlider
+	};
+
+	return lineWidthDialogObject;
+
+}

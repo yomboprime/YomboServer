@@ -604,3 +604,19 @@ sharedboard.prototype.setCurrentFillColor = function( color ) {
 	}
 
 };
+
+sharedboard.prototype.setCurrentLineWidth = function( lineWidth ) {
+
+	this.currentToolState.lineWidth = lineWidth;
+
+	var cmd = this.currentToolState.currentCommand;
+
+	if ( cmd ) {
+
+		cmd.lineWidth = lineWidth;
+
+		sharedBoard.guiContinueCommand( cmd.x, cmd.y );
+
+	}
+
+};
