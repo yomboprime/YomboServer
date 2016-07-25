@@ -106,21 +106,21 @@ function createToolbar( sharedBoard, onToolSelected ) {
 				text: "Flood fill",
 				icon: "/public/assets/icons/sharedboard/mejias/cubo_pintura.png",
 				select: toolSelectFunction,
-				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 5 },
+				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 6 },
 				tooltip: "Flood fill tool."
 			} ),
 			new sap.ui.unified.MenuItem( {
 				text: "Text",
 				icon: "/public/assets/icons/sharedboard/toolText.png",
 				select: toolSelectFunction,
-				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 6 },
+				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 7 },
 				tooltip: "Text tool."
 			} ),
 			new sap.ui.unified.MenuItem( {
 				text: "File",
 				icon: "/public/assets/icons/sharedboard/mejias/archivo.png",
 				select: toolSelectFunction,
-				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 7 },
+				customData: { Type: "sap.ui.core.CustomData", key: "toolIndex", value: 8 },
 				tooltip: "File send tool."
 			} )
 		]

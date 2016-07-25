@@ -69,6 +69,7 @@ sharedboard.commandList = [
 			}
 			if ( cmd.strokeStyle !== "transparent" ) {
 				ctx2d.strokeStyle = cmd.strokeStyle;
+				ctx2d.lineWidth = cmd.lineWidth;
 				ctx2d.strokeRect( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height );
 			}
 		}
@@ -87,6 +88,7 @@ sharedboard.commandList = [
 			}
 			if ( cmd.strokeStyle !== "transparent" ) {
 				ctx2d.strokeStyle = cmd.strokeStyle;
+				ctx2d.lineWidth = cmd.lineWidth;
 				ctx2d.beginPath();
 				ctx2d.ellipse( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height, 0, 0, 2 * Math.PI, false );
 				ctx2d.stroke();
@@ -113,6 +115,7 @@ sharedboard.commandList = [
 				var x = cmd.x * width;
 				var y = cmd.y * height;
 				ctx2d.strokeStyle = cmd.strokeStyle;
+				ctx2d.lineWidth = cmd.lineWidth;
 				for ( var i = 0, il = lines.length; i < il; i++ ) {
 					ctx2d.strokeText( lines[ i ], x, y );
 					y += fontSize;
@@ -411,6 +414,7 @@ sharedboard.toolList = [
 				bold: false,
 				strokeStyle: ts.strokeStyle,
 				fillStyle: ts.fillStyle,
+				lineWidth: ts.lineWidth,
 				text: "",
 				x: x,
 				y: y
