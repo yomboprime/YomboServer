@@ -41,8 +41,11 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 	this.yomboServer.mapFile( '/public/modules/sharedboard/main_sharedboard.js' );
 	this.yomboServer.mapFile( '/public/modules/sharedboard/sharedboard.js' );
 
-	this.yomboServer.mapDirectory( '/public/lib/openui5' );
 	this.yomboServer.mapDirectory( '/public/assets/icons/sharedboard' );
+
+	this.yomboServer.mapDirectory( '/public/lib/openui5' );
+
+	this.yomboServer.mapDirectory( '/public/lib/three' );
 
 	console.log( "sharedboard module started on room: " + this.config.room );
 

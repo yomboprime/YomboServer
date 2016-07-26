@@ -319,12 +319,10 @@ function paintLineWidthIcon( canvas, button, lineWidth ) {
 	var d = Math.min( 40, lineWidth );
 	ctx2d.fillRect( canvas.width * 0.5 - d * 0.5, 25 , d, 12 );
 
-/*kk
-		ctx2d.font = "12px Times New Roman";
-		ctx2d.textAlign = "center";
-		ctx2d.fillStyle = "black";
-		ctx2d.fillText( "Line width", iconSize * 0.5, iconSize * 0.7 );
-*/
+	ctx2d.font = "12px Courier New";
+	ctx2d.textAlign = "center";
+	ctx2d.fillStyle = "black";
+	ctx2d.fillText( "Width", iconSize * 0.5, iconSize * 0.3 );
 
 	setCanvasAsButtonIcon( button, canvas );
 

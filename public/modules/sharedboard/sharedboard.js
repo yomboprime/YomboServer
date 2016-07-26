@@ -28,6 +28,8 @@ sharedboard.prototype = {
 	
 };
 
+sharedboard.colorTemp1 = new THREE.Color();
+
 sharedboard.commandList = [
 	{
 		name: "eraseboard",
@@ -122,7 +124,24 @@ sharedboard.commandList = [
 				}
 			}
 		}
-	}
+	},
+	{
+		name: "floodfill",
+		paintFunction: function( ctx2d, width, height, cmd ) {
+			var color = cmd.fillStyle;
+			if ( color === "transparent" ) {
+				return;
+			}
+			sharedboard.colorTemp1.set( color );
+			sharedboard.doFloodFill( ctx2d, width, height,
+				Math.floor( cmd.x * width ),
+				Math.floor( cmd.y * height ),
+				Math.floor( sharedboard.colorTemp1.r * 255 ),
+				Math.floor( sharedboard.colorTemp1.g * 255 ),
+				Math.floor( sharedboard.colorTemp1.b * 255 )
+			);
+		}
+	},
 ];
 
 sharedboard.commandHash = {};
@@ -220,6 +239,92 @@ sharedboard.strokeCircle = function( ctx2d, x, y, radius, color ) {
 	ctx2d.fill();
 	ctx2d.closePath();
 
+};
+
+
+sharedboard.fillState = null;
+
+sharedboard.doFloodFill = function( ctx2d, width, height, x, y, red, green, blue ) {
+
+	// Do flood fill in the canvas 2d context. Use alpha channel for state (it is reset)
+
+	var numPixels = width * height;
+
+	var fillState = sharedboard.fillState;
+	if ( ! fillState || fillState.length !== numPixels ) {
+		sharedboard.fillState = [];
+		fillState = sharedboard.fillState;
+		for ( var i = 0; i < numPixels; i++ ) {
+			fillState[ i ] = 0;
+		}
+	}
+
+	var imageData = ctx2d.getImageData( 0, 0, width, height );
+    var pixelData = imageData.data;
+
+	// Reset state
+	var p = 0;
+	for ( var j = 0; j < height; j++ ) {
+		for ( var i = 0; i < width; i++ ) {
+			fillState[ p ] = 0;
+			p++;
+		}
+    }
+
+	// Plant first seed
+	p = 4 * ( y * width + x );
+	var originalRed = pixelData[ p ];
+	var originalGreen = pixelData[ p + 1 ];
+	var originalBlue = pixelData[ p + 2 ];
+	fillState[ y * width + x ] = 1;
+
+	function pixelEqualsRGB( x, y ) {
+
+		var p = 4 * ( y * width + x );
+
+		return pixelData[ p ] === originalRed && pixelData[ p + 1 ] === originalGreen && pixelData[ p + 2 ] === originalBlue ? 1 : 0;
+
+	}
+
+	var terminate = false;
+	while ( ! terminate ) {
+		terminate = true;
+		p = 0;
+		var p2 = 0;
+		for ( var j = 0; j < height; j++ ) {
+			for ( var i = 0; i < width; i++ ) {
+
+				if ( fillState[ p2 ] === 1 ) {
+
+					pixelData[ p ] = red;
+					pixelData[ p + 1 ] = green;
+					pixelData[ p + 2 ] = blue;
+					fillState[ p2 ] = 2;
+
+					if ( j > 0 && pixelEqualsRGB( i, j - 1 ) ) {
+						fillState[ ( j - 1 ) * width + i ] = 1;
+						terminate = false;
+					}
+					if ( j < height - 1 && pixelEqualsRGB( i, j + 1 ) ) {
+						fillState[ ( j + 1 ) * width + i ] = 1;
+						terminate = false;
+					}
+					if ( i > 0 && pixelEqualsRGB( i - 1, j ) ) {
+						fillState[ j * width + ( i - 1 ) ] = 1;
+						terminate = false;
+					}
+					if ( i < width - 1 && pixelEqualsRGB( i + 1, j ) ) {
+						fillState[ j * width + ( i + 1 ) ] = 1;
+						terminate = false;
+					}
+				}
+				p += 4;
+				p2++;
+			}
+		}
+	}
+
+    ctx2d.putImageData( imageData, 0, 0 );
 };
 
 sharedboard.toolList = [
@@ -393,7 +498,13 @@ sharedboard.toolList = [
 	{
 		name: "floodfill",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+			var command = {
+				name: "floodfill",
+				fillStyle: sharedBoard.currentToolState.fillStyle,
+				x: x,
+				y: y
+			};
+			sharedBoard.sendCommandArray( [ command ] );
 		},
 		guiContinueFunction: function( sharedBoard, x, y, down ) {
 			// Nothing to do
