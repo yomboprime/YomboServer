@@ -141,7 +141,7 @@ sharedboard.commandList = [
 				Math.floor( sharedboard.colorTemp1.b * 255 )
 			);
 		}
-	},
+	}
 ];
 
 sharedboard.commandHash = {};
@@ -246,7 +246,7 @@ sharedboard.fillState = null;
 
 sharedboard.doFloodFill = function( ctx2d, width, height, x, y, red, green, blue ) {
 
-	// Do flood fill in the canvas 2d context. Use alpha channel for state (it is reset)
+	// Do flood fill in the canvas 2d context.
 
 	var numPixels = width * height;
 
@@ -281,47 +281,86 @@ sharedboard.doFloodFill = function( ctx2d, width, height, x, y, red, green, blue
 	function pixelEqualsRGB( x, y ) {
 
 		var p = 4 * ( y * width + x );
+		var p2 = ( y * width + x );
 
-		return pixelData[ p ] === originalRed && pixelData[ p + 1 ] === originalGreen && pixelData[ p + 2 ] === originalBlue ? 1 : 0;
+		return fillState[ p2 ] === 0 && pixelData[ p ] === originalRed && pixelData[ p + 1 ] === originalGreen && pixelData[ p + 2 ] === originalBlue ? 1 : 0;
 
 	}
 
+	var x0 = x;
+	var y0 = y;
+	var x1 = x;
+	var y1 = y;
+	
+	var x0b = x0;
+	var x1b = x1;
+	var y0b = y0;
+	var y1b = y1;
+
+	var q, q2;
+
+	var dx;
+
 	var terminate = false;
 	while ( ! terminate ) {
+
 		terminate = true;
-		p = 0;
-		var p2 = 0;
-		for ( var j = 0; j < height; j++ ) {
-			for ( var i = 0; i < width; i++ ) {
 
-				if ( fillState[ p2 ] === 1 ) {
+		q2 = y0 * width + x0;
+		q = q2 * 4;
 
-					pixelData[ p ] = red;
-					pixelData[ p + 1 ] = green;
-					pixelData[ p + 2 ] = blue;
-					fillState[ p2 ] = 2;
+		dx = x1 - x0 + 1;
+
+		for ( var j = y0; j <= y1; j++ ) {
+			for ( var i = x0; i <= x1; i++ ) {
+
+				if ( fillState[ q2 ] === 1 ) {
+
+					pixelData[ q ] = red;
+					pixelData[ q + 1 ] = green;
+					pixelData[ q + 2 ] = blue;
+					fillState[ q2 ] = 2;
 
 					if ( j > 0 && pixelEqualsRGB( i, j - 1 ) ) {
 						fillState[ ( j - 1 ) * width + i ] = 1;
+						if ( j - 1 < y0b ) {
+							y0b = j - 1;
+						}
 						terminate = false;
 					}
 					if ( j < height - 1 && pixelEqualsRGB( i, j + 1 ) ) {
 						fillState[ ( j + 1 ) * width + i ] = 1;
+						if ( j + 1 > y1b ) {
+							y1b = j + 1;
+						}
 						terminate = false;
 					}
 					if ( i > 0 && pixelEqualsRGB( i - 1, j ) ) {
 						fillState[ j * width + ( i - 1 ) ] = 1;
+						if ( i - 1 < x0b ) {
+							x0b = i - 1;
+						}
 						terminate = false;
 					}
 					if ( i < width - 1 && pixelEqualsRGB( i + 1, j ) ) {
 						fillState[ j * width + ( i + 1 ) ] = 1;
+						if ( i + 1 > x1b ) {
+							x1b = i + 1;
+						}
 						terminate = false;
 					}
 				}
-				p += 4;
-				p2++;
+				q += 4;
+				q2++;
 			}
+			q += ( width - dx ) * 4;
+			q2 +=  width - dx;
 		}
+
+		x0 = x0b;
+		x1 = x1b;
+		y0 = y0b;
+		y1 = y1b;
 	}
 
     ctx2d.putImageData( imageData, 0, 0 );
