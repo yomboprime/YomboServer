@@ -31,6 +31,8 @@ YomboServer.TheServer = function () {
 
 	this.config = null;
 
+	this.passwords = null;
+
 	// Active modules
 	this.modules = [];
 
@@ -88,6 +90,12 @@ YomboServer.TheServer.prototype.run = function() {
 	if ( this.config === null ) {
 		console.error( "YomboServer.init: Couldn't load config file." );
 		return;
+	}
+
+	// Load passwords
+	this.passwords = this.loadPasswords();
+	if ( this.passwords === null ) {
+		console.error( "YomboServer.init: Couldn't load passwords file. Passwords will be unavailable" );
 	}
 
 	// Serve root index.html
@@ -460,8 +468,10 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 
 	console.log( "Loading config file in ./config.json ..." );
 
+	var configFileContent = null;
+
 	try {
-		var configFileContent = fs.readFileSync( "./config.json", "utf-8" );
+		configFileContent = fs.readFileSync( "./config.json", "utf-8" );
 	}
 	catch( e ) {
 		if ( e.code === 'ENOENT' ) {
@@ -482,6 +492,33 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 
 };
 
+YomboServer.TheServer.prototype.loadPasswords = function() {
+
+	console.log( "Loading passwords file in ./passwords.json ..." );
+
+	var passwordsFileContent = null;
+
+	try {
+		passwordsFileContent = fs.readFileSync( "./passwords.json", "utf-8" );
+	}
+	catch( e ) {
+		if ( e.code === 'ENOENT' ) {
+			console.error( "Error: Passwords file not found (path: ./passwords.json)" );
+		}
+		else {
+			throw e;
+		}
+	}
+
+	var passwords = JSON.parse( passwordsFileContent );
+
+	if ( ! passwords ) {
+		console.error( "Error while loading passwords file in ./passwords.json" );
+	}
+
+	return passwords;
+
+};
 
 // *****  Services *****
 
@@ -598,6 +635,38 @@ YomboServer.TheServer.prototype.talkToListeners = function( functionName, params
 
 	}
 	
+};
+
+// ***** Password Service *****
+
+YomboServer.TheServer.prototype.getPassword = function( moduleName, userName ) {
+
+	// Returns password for module and user name. Returns null if password not available.
+
+	if ( ! this.passwords ) {
+
+		return null;
+
+	}
+
+	var modulePasswords = this.passwords[ moduleName ];
+
+	if ( ! modulePasswords ) {
+
+		return null;
+
+	}
+
+	var password = modulePasswords[ userName ];
+
+	if ( password === undefined ) {
+
+		return null;
+
+	}
+
+	return password;
+
 };
 
 // ***** Main client connection function *****
