@@ -17,6 +17,7 @@ var sharedBoard = null;
 var contextMenu = null;
 var toolbar = null;
 var textToolDialog = null;
+var fileToolDialog = null;
 
 var uiColorPicker = null;
 
@@ -39,12 +40,21 @@ function init() {
 	// Create UI
 	contextMenu = createContextMenu();
 	toolbar = createToolbar( sharedBoard, function( selectedTool ) {
+		var blit = false;
 		if ( selectedTool.name !== "text" ) {
 			textToolDialog.dialog.close();
+			blit = true;
+		}
+		if ( selectedTool.name !== "file" ) {
+			fileToolDialog.dialog.close();
+			blit = true;
+		}
+		if ( blit ) {
 			sharedBoard.blit();
 		}
 	} );
 	textToolDialog = createTextToolDialog( sharedBoard );
+	fileToolDialog = createFileToolDialog( sharedBoard );
 
 	sharedBoard.init( firstCanvas, presentationCanvas, socket, "thesharedboard" );
 
@@ -151,7 +161,16 @@ function onMouseUp( event ) {
 		
 	}
 
-	if ( sharedBoard.currentToolState.selectedTool.name !== "text" ) {
+	var currentTool = sharedBoard.currentToolState.selectedTool.name;
+
+	if ( currentTool === "file" ) {
+
+		sharedBoard.guiStateDown = false;
+
+		showFileToolDialog();
+
+	}
+	else if ( currentTool !== "text" ) {
 
 		var x = event.clientX / presentationCanvas.width;
 		var y = event.clientY / presentationCanvas.height;
@@ -173,6 +192,7 @@ function showToolbar() {
 
 	toolbar.close();
 	toolbar.open();
+	toolbar.focus();
 
 }
 
@@ -182,8 +202,19 @@ function showTextToolDialog() {
 
 	refreshTextToolDialogCommand( sharedBoard, textToolDialog );
 
+	textToolDialog.dialog.focus();
+
 }
 
+function showFileToolDialog() {
+
+	fileToolDialog.dialog.open();
+
+	refreshFileToolDialogCommand( sharedBoard, fileToolDialog );
+
+	fileToolDialog.dialog.focus();
+
+}
 
 function pickColor( x, y, store ) {
 

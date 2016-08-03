@@ -141,6 +141,18 @@ sharedboard.commandList = [
 				Math.floor( sharedboard.colorTemp1.b * 255 )
 			);
 		}
+	},
+	{
+		name: "file",
+		paintFunction: function( ctx2d, width, height, cmd ) {
+			if ( cmd.invertBoundary ) {
+				ctx2d.globalCompositeOperation = "difference";
+				ctx2d.strokeStyle = "white";
+				ctx2d.lineWidth = cmd.lineWidth;
+				ctx2d.strokeRect( cmd.x * width, cmd.y * height, cmd.width * width, cmd.height * height );
+				ctx2d.globalCompositeOperation = "source-over";
+			}
+		}
 	}
 ];
 
@@ -446,6 +458,7 @@ sharedboard.toolList = [
 	{
 		name: "rectangle",
 		guiStartFunction: function( sharedBoard, x, y ) {
+
 			var ts = sharedBoard.currentToolState;
 			ts.x0 = x;
 			ts.y0 = y;
@@ -584,13 +597,78 @@ sharedboard.toolList = [
 	{
 		name: "file",
 		guiStartFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+
+			var ts = sharedBoard.currentToolState;
+			ts.x0 = x;
+			ts.y0 = y;
+			ts.currentCommand = {
+				name: "file",
+				strokeStyle: ts.strokeStyle,
+				fillStyle: ts.fillStyle,
+				lineWidth: ts.lineWidth,
+				x: x,
+				y: y,
+				width: 0,
+				height: 0,
+				userWidth: 0,
+				userHeight: 0,
+				originalWidth: 400,
+				originalHeight: 250,
+				fileName: "Unspecified",
+				fileContent: null,
+				invertBoundary: true
+			};
+
 		},
 		guiContinueFunction: function( sharedBoard, x, y, down ) {
-			// Nothing to do
+
+			var ts = sharedBoard.currentToolState;
+			var cmd = ts.currentCommand;
+
+			if ( ! cmd ) {
+				return;
+			}
+
+			if ( down ) {
+				var x0 = ts.x0;
+				var y0 = ts.y0;
+				var w = x - x0;
+				var h = y - y0;
+				if ( w < 0 ) {
+					x0 = x;
+					w = -w;
+				}
+				if ( h < 0 ) {
+					y0 = y;
+					h = -h;
+				}
+
+				cmd.x = x0;
+				cmd.y = y0;
+				cmd.width = w;
+				cmd.height = h;
+
+				cmd.userWidth = w;
+				cmd.userHeight = h;
+
+			}
+
+			sharedBoard.constraintFileCommand( cmd );
+
+			sharedBoard.drawLocal( cmd );
+
 		},
-		guiEndFunction: function( sharedBoard, x, y ) {
-			// Nothing to do
+		guiEndFunction: function( sharedBoard, x, y )
+		{
+
+			var cmd = sharedBoard.currentToolState.currentCommand;
+
+			sharedBoard.constraintFileCommand( cmd );
+
+			sharedBoard.sendCommandArray( [ cmd ] );
+
+			sharedBoard.currentToolState.currentCommand = null;
+
 		}
 	}
 
@@ -767,6 +845,26 @@ sharedboard.prototype.setCurrentLineWidth = function( lineWidth ) {
 
 		sharedBoard.guiContinueCommand( cmd.x, cmd.y );
 
+	}
+
+};
+
+sharedboard.prototype.constraintFileCommand = function( cmd ) {
+
+	if ( cmd.width === 0 ) {
+		cmd.width = 1;
+		cmd.height = 1;
+	}
+
+	if ( cmd.constraintAspect ) {
+		var originalAspect = cmd.originalHeight / cmd.originalWidth;
+		var presentationAspect = cmd.width < 1 ? 1 : cmd.height / cmd.width;
+		if ( presentationAspect >= originalAspect ) {
+			cmd.height = cmd.width * originalAspect;
+		}
+		else {
+			cmd.width = cmd.height / originalAspect;
+		}
 	}
 
 };

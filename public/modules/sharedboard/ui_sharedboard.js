@@ -137,6 +137,7 @@ function createToolbar( sharedBoard, onToolSelected ) {
 	var strokeColorButton = new sap.m.Button( {
 		press: function() {
 			colorChoosePanelStroke.dialog.open( false, null, "left top", "left bottom", strokeColorButton, "0 0", "fit" );
+			colorChoosePanelStroke.dialog.focus();
 		},
 		tooltip: 'Set stroke color.'
 	} );
@@ -150,6 +151,7 @@ function createToolbar( sharedBoard, onToolSelected ) {
 	var fillColorButton = new sap.m.Button( {
 		press: function() {
 			colorChoosePanelFill.dialog.open( false, null, "left top", "left bottom", fillColorButton, "0 0", "fit" );
+			colorChoosePanelFill.dialog.focus();
 		},
 		tooltip: 'Set fill color.'
 	} );
@@ -793,5 +795,86 @@ function createLineWidthDialog( sharedBoard ) {
 	};
 
 	return lineWidthDialogObject;
+
+}
+
+function createFileToolDialog( sharedBoard ) {
+
+	var constraintAspectCheckbox = new sap.ui.commons.CheckBox( { text: "Constraint aspect to original image" } );
+	constraintAspectCheckbox.attachChange( function( oControlEvent ) {
+
+		refreshFileToolDialogCommand( sharedBoard, fileToolDialogObject );
+
+	} );
+
+
+	var fileToolImageOptionsPanelContent = new sap.ui.layout.VerticalLayout( "theFileToolImageOptionsPanelContent", {
+		content: [
+			constraintAspectCheckbox
+		]
+	} );
+
+	var fileToolDialog = new sap.ui.commons.Dialog();
+
+	fileToolDialog.setWidth( "500px" );
+    fileToolDialog.setHeight( "500px" );
+    fileToolDialog.addStyleClass( "unselectable" );
+    fileToolDialog.setKeepInWindow( true );
+
+    fileToolDialog.attachClosed( function() {
+        sharedBoard.currentToolState.currentCommand = null;
+		fileToolDialog.close();
+		sharedBoard.blit();
+    } );
+
+	fileToolDialog.setTitle( "File tool" );
+
+	fileToolDialog.addContent( fileToolImageOptionsPanelContent );
+
+	fileToolDialog.addButton( new sap.ui.commons.Button( {
+        text: "Cancel",
+        press: function() {
+			fileToolDialog.close();
+		}
+    } ) );
+
+	fileToolDialog.addButton( new sap.ui.commons.Button( {
+        text: "Accept",
+        press: function() {
+            var cmd = sharedBoard.currentToolState.currentCommand;
+			if ( cmd ) {
+				sharedBoard.guiEndCommand( cmd.x, cmd.y );
+				fileToolDialog.close();
+			}
+		}
+    } ) );
+
+
+	var fileToolDialogObject = {
+		dialog: fileToolDialog,
+		constraintAspectCheckbox: constraintAspectCheckbox
+	};
+
+	return fileToolDialogObject;
+
+}
+
+function refreshFileToolDialogCommand( sharedBoard, fileToolDialogObject ) {
+
+	var cmd = sharedBoard.currentToolState.currentCommand;
+	if ( cmd ) {
+
+		var previousConstraintAspect = cmd.constraintAspect;
+		cmd.constraintAspect = fileToolDialogObject.constraintAspectCheckbox.getChecked();
+		if ( ! cmd.constraintAspect && previousConstraintAspect ) {
+
+			cmd.width = cmd.userWidth;
+			cmd.height = cmd.userHeight;
+
+		}
+
+		sharedBoard.guiContinueCommand( cmd.x, cmd.y );
+
+	}
 
 }
