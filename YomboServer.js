@@ -677,10 +677,15 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 	var client = {
 
+		isGod: false,
 		socket: socket,
 		connectedModules: []
 
 	};
+
+	client.isGod = this.isLocalClient( client );
+
+	console.log( "Client is God: " + client.isGod );
 
 	this.clients.push( client );
 
@@ -768,3 +773,8 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 };
 
+YomboServer.TheServer.prototype.isLocalClient = function( client ) {
+
+	return "::ffff:127.0.0.1" === client.socket.handshake.address;
+
+};

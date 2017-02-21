@@ -147,6 +147,10 @@ admin.admin.prototype.clientConnection = function( client ) {
 	var scope = this;
 	client.socket.on( "ysAdminStartModule", function( msg ) {
 
+		if ( ! client.isGod ) {
+			return;
+		}
+
 		var launchConfig = null;
 		if ( msg.instanceName ) {
 			launchConfig = scope.yomboServer.searchByValue( scope.yomboServer.config.launchConfigurations, "instanceName", msg.instanceName );
@@ -164,6 +168,10 @@ admin.admin.prototype.clientConnection = function( client ) {
 	} );
 
 	client.socket.on( "ysAdminStopModule", function( msg ) {
+
+		if ( ! client.isGod ) {
+			return;
+		}
 
 		var module = scope.yomboServer.searchByValue( scope.yomboServer.modules, "instanceName", msg.instanceName );
 		if ( module ) {

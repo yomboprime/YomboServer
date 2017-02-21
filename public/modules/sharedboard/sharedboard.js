@@ -162,6 +162,29 @@ for ( var i = 0, il = sharedboard.commandList.length; i < il; i++ ) {
 	sharedboard.commandHash[ cmd.name ] = cmd;
 }
 
+// Supported file types
+sharedboard.fileTypes = [
+	"img",
+	"svg",
+	"3d"
+];
+
+// Supported file extensions
+sharedboard.fileExtensions = {
+
+	png: { type: "img", subtype: "png" },
+	jpg: { type: "img", subtype: "jpg" },
+	jpeg: { type: "img", subtype: "jpg" },
+	gif: { type: "img", subtype: "gif" },
+
+	svg: { type: "svg", subtype: "svg" },
+
+	obj: { type: "3d", subtype: "obj" },
+	stl: { type: "3d", subtype: "stl" },
+	dae: { type: "3d", subtype: "dae" }
+
+};
+
 sharedboard.getTextFontFamilyList = function() {
 
 	return [
