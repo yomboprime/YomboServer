@@ -22,7 +22,7 @@ if ( typeof module !== 'undefined' ) {
 
 sharedboard.sharedboard = function() {
 
-	this.latestPaintCommands = [ this.createEraseWhiteCommand() ];
+	// Nothing to do
 
 };
 
@@ -34,7 +34,7 @@ sharedboard.sharedboard.prototype = {
 
 sharedboard.sharedboard.prototype.start = function( onStart ) {
 
-	console.log( "sharedboard module starting on room: " + this.config.room );
+	console.log( "sharedboard module starting" );
 
 	this.yomboServer.mapFile( '/public/modules/sharedboard/sharedboard.html' );
 	this.yomboServer.mapFile( '/public/modules/sharedboard/ui_sharedboard.js' );
@@ -47,7 +47,7 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 
 	this.yomboServer.mapDirectory( '/public/lib/three' );
 
-	console.log( "sharedboard module started on room: " + this.config.room );
+	console.log( "sharedboard module started" );
 
 	if ( onStart ) {
 
@@ -73,7 +73,28 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 	console.log( "sharedboard: Client connected." );
 
-	// TODO insert client into this.config.room
+	// Get the room name from the referer url
+	var referer = this.yomboServer.getClientReferer( client );
+	var index = referer.indexOf( "?room=" );
+	if ( index < 0 ) {
+		return;
+	}
+	var roomName = referer.substring( index + 6 );
+
+	var room = this.yomboServer.findRoom( this, roomName );
+	if ( room === null ) {
+		room = this.yomboServer.createRoom( this, roomName );
+		room.sharedboard = {
+			latestPaintCommands: [ this.createEraseWhiteCommand() ]
+		}
+	}
+
+	client.sharedboard = {
+		room: room
+	}
+
+	// Insert client into the room
+	this.yomboServer.joinClientToRoom( client, room );
 
 	var scope = this;
 
@@ -81,7 +102,7 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 		console.log( "Some client sent yssbGetLatestData message. *****" );
 
-		client.socket.emit( "yssbPaintCommand", scope.latestPaintCommands );
+		client.socket.emit( "yssbPaintCommand", room.sharedboard.latestPaintCommands );
 
 	} );
 
@@ -89,8 +110,7 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 		console.log( "Some client sent paint command." );
 
-		// TODO emit to room, not to module clients array
-		scope.yomboServer.emitToClientsArray( scope.clients, "yssbPaintCommand", msg );
+		scope.yomboServer.emitToRoom( room, "yssbPaintCommand", msg );
 
 		for ( var i = 0, il = msg.length; i < il; i++ ) {
 
@@ -102,21 +122,23 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 			}
 
 			if ( cmd.name === "eraseboard" ) {
-				scope.latestPaintCommands = [];
+				room.sharedboard.latestPaintCommands = [];
 			}
 
-			scope.latestPaintCommands.push( cmd );
+			var latestPaintCommands = room.sharedboard.latestPaintCommands;
 
-			if ( scope.latestPaintCommands.length > scope.config.commandStorageClean ) {
-				scope.latestPaintCommands.splice( 0, Math.floor( scope.config.commandStorageClean * 0.5 ) );
-				scope.latestPaintCommands.unshift( scope.createEraseWhiteCommand() );
+			latestPaintCommands.push( cmd );
+
+			if ( latestPaintCommands.length > scope.config.commandStorageClean ) {
+				latestPaintCommands.splice( 0, Math.floor( scope.config.commandStorageClean * 0.5 ) );
+				latestPaintCommands.unshift( scope.createEraseWhiteCommand() );
 			}
 
 		}
 
 	} );
 
-	client.socket.emit( "yssbPaintCommand", scope.latestPaintCommands );
+	client.socket.emit( "yssbPaintCommand", room.sharedboard.latestPaintCommands );
 
 };
 

@@ -1,6 +1,6 @@
 {
 
-    "listenPort": 8080,
+    "listenPort": 12345,
 
     "launchConfigurations": [
         {
@@ -15,7 +15,6 @@
             "instanceName": "thesharedboard",
             "enabled": true,
             "config": {
-                "room": "SharedBoardRoom",
                 "commandStorageClean": 500
             }
         },
@@ -24,13 +23,9 @@
             "instanceName": "theRTCSignalServer",
             "enabled": false,
             "config": {
-                "adminPassword": "lolailo12",
                 "initialRooms": [
                     {
-                        "name": "homeWebcam",
-                        "cameraPassword": "lolailo12",
-                        "storePassword": "lolailo12",
-                        "vipPassword": "lolailo12"
+                        "name": "homeWebcam"
                     }
                 ]
             }

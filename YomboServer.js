@@ -31,8 +31,6 @@ YomboServer.TheServer = function () {
 
 	this.config = null;
 
-	this.passwords = null;
-
 	// Active modules
 	this.modules = [];
 
@@ -90,12 +88,6 @@ YomboServer.TheServer.prototype.run = function() {
 	if ( this.config === null ) {
 		console.error( "YomboServer.init: Couldn't load config file." );
 		return;
-	}
-
-	// Load passwords
-	this.passwords = this.loadPasswords();
-	if ( this.passwords === null ) {
-		console.error( "YomboServer.init: Couldn't load passwords file. Passwords will be unavailable" );
 	}
 
 	// Serve root index.html
@@ -325,6 +317,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	module.config = config;
 	module.clients = [];
 	module.yomboServer = this;
+	module.rooms = [];
 
 	this.modules.push( module );
 
@@ -492,35 +485,100 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 
 };
 
-YomboServer.TheServer.prototype.loadPasswords = function() {
+// *****  Services *****
 
-	console.log( "Loading passwords file in ./passwords.json ..." );
+// ***** Rooms service *****
 
-	var passwordsFileContent = null;
+YomboServer.TheServer.prototype.internalRoomName = function( module, roomName ) {
 
-	try {
-		passwordsFileContent = fs.readFileSync( "./passwords.json", "utf-8" );
-	}
-	catch( e ) {
-		if ( e.code === 'ENOENT' ) {
-			console.error( "Error: Passwords file not found (path: ./passwords.json)" );
-		}
-		else {
-			throw e;
-		}
-	}
+	return module.instanceName + "_" + roomName;
+	
+};
 
-	var passwords = JSON.parse( passwordsFileContent );
 
-	if ( ! passwords ) {
-		console.error( "Error while loading passwords file in ./passwords.json" );
+YomboServer.TheServer.prototype.createRoom = function( module, roomName ) {
+
+	var room = this.findRoom( module, roomName );
+	if ( room !== null ) {
+		return room;
 	}
 
-	return passwords;
+	// In addition to these members, the room will have an object named after the module it belongs to.
+	room = {
+		name: roomName,
+		internalName: this.internalRoomName( module, roomName ),
+		clients: []
+	};
+
+	module.rooms.push( room );
+
+	return room;
 
 };
 
-// *****  Services *****
+YomboServer.TheServer.prototype.removeRoom = function( module, roomName ) {
+
+	var room = this.findRoom( module, roomName );
+
+	if ( room !== null ) {
+		for ( var i = 0; i < room.clients.length; i++ ) {
+			this.removeClientFromRoom( room.clients[ i ], room );
+		}
+
+		var index = module.rooms.indexOf( room );
+		if ( index >= 0 ) {
+			module.rooms.splice( index, 1 );
+		}
+
+	}
+
+};
+
+YomboServer.TheServer.prototype.findRoom = function( module, roomName ) {
+
+	var internalName = this.internalRoomName( module, roomName );
+	for ( var i = 0; i < module.rooms.length; i++ ) {
+		if ( module.rooms[ i ].internalName === internalName ) {
+			return module.rooms[ i ];
+		}
+	}
+
+	return null;
+
+};
+
+YomboServer.TheServer.prototype.joinClientToRoom = function( client, room ) {
+
+	client.socket.join( room.internalName );
+	if ( room.clients.indexOf( client ) < 0 ) {
+		room.clients.push( client );
+	}
+
+};
+
+YomboServer.TheServer.prototype.removeClientFromRoom = function( client, room ) {
+
+	client.socket.leave( room.internalName );
+	var index = room.clients.indexOf( client );
+	if ( index >= 0 ) {
+		room.clients.splice( index, 1 );
+	}
+
+};
+
+YomboServer.TheServer.prototype.emitToRoom = function( room, name, message ) {
+
+	io.to( room.internalName ).emit( name, message );
+
+};
+
+// ***** Security service *****
+
+YomboServer.TheServer.prototype.isLocalClient = function( client ) {
+
+	return "::ffff:127.0.0.1" === client.socket.handshake.address;
+
+};
 
 // ***** Net Services *****
 
@@ -576,6 +634,11 @@ YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, mess
 
 };
 
+YomboServer.TheServer.prototype.getClientReferer = function( client ) {
+
+	return client.socket.client.request.headers.referer;
+	
+}
 
 // ***** Module Administration Services *****
 
@@ -637,44 +700,13 @@ YomboServer.TheServer.prototype.talkToListeners = function( functionName, params
 	
 };
 
-// ***** Password Service *****
-
-YomboServer.TheServer.prototype.getPassword = function( moduleName, userName ) {
-
-	// Returns password for module and user name. Returns null if password not available.
-
-	if ( ! this.passwords ) {
-
-		return null;
-
-	}
-
-	var modulePasswords = this.passwords[ moduleName ];
-
-	if ( ! modulePasswords ) {
-
-		return null;
-
-	}
-
-	var password = modulePasswords[ userName ];
-
-	if ( password === undefined ) {
-
-		return null;
-
-	}
-
-	return password;
-
-};
-
 // ***** Main client connection function *****
 
 YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 	console.log( "Client connected: " + socket.id );
 
+	// In addition to these members, clients will have objects named after the modules they connect to
 	var client = {
 
 		isGod: false,
@@ -770,11 +802,5 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 		}
 
 	} );
-
-};
-
-YomboServer.TheServer.prototype.isLocalClient = function( client ) {
-
-	return "::ffff:127.0.0.1" === client.socket.handshake.address;
 
 };
