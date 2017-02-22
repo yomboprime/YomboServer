@@ -709,11 +709,19 @@ sharedboard.prototype.init = function( firstCanvas, presentationCanvas, socket, 
 
 	socket.on( "yssbPaintCommand", function( msg ) {
 
-		console.log( "Arrived paint command." );
+		//console.log( "Arrived paint command." );
 
 		scope.executeCommandArray( scope.firstCanvas, msg );
 
 		scope.blit();
+
+	} );
+
+	socket.on( "yssbError", function( msg ) {
+
+		console.log( "Error: " + msg );
+
+		alert( msg );
 
 	} );
 

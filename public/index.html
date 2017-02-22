@@ -1,13 +1,31 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Yomboserver</title>
+        <title>Yomboserver applications</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	    body {
+		background-color: black;
+	    }
+        </style>
+
+	<script src="/socket.io/socket.io.js"></script>
 
     </head>
     
     <body>
+
+	<script id='sap-ui-bootstrap'
+            src='/public/lib/openui5/resources/sap-ui-core.js'
+            data-sap-ui-theme='sap_bluecrystal'
+            data-sap-ui-libs='sap.m,sap.ui.layout,sap.ui.unified,sap.ui.commons,sap.ui.core'
+            data-sap-ui-compatVersion='edge'
+            data-sap-ui-preload='async'>
+        </script>
+
+	<script src="/public/modules/appreg/main_appreg.js"></script>
 
     </body>
 </html>

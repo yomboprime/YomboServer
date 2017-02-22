@@ -34,7 +34,7 @@ admin.admin.prototype = {
 
 admin.admin.prototype.start = function( onStart ) {
 
-	this.yomboServer.mapFile( "/public/admin.html" );
+	this.yomboServer.mapFile( "/public/modules/admin/admin.html" );
 	this.yomboServer.mapFile( "/public/modules/admin/main_admin.js" );
 	this.yomboServer.mapFile( "/public/lib/w2ui/jquery-2.1.4.min.js" );
 	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-1.4.3.css" );
@@ -92,6 +92,8 @@ admin.admin.prototype.start = function( onStart ) {
 		} );
 
 	} );
+
+	this.yomboServer.registerApplication( "Admin", "Admin page", this.yomboServer.gethostURL( "public/modules/admin/admin.html" ) );
 
 	console.log( "Administration module started." );
 

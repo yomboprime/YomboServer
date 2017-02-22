@@ -34,8 +34,6 @@ sharedboard.sharedboard.prototype = {
 
 sharedboard.sharedboard.prototype.start = function( onStart ) {
 
-	console.log( "sharedboard module starting" );
-
 	this.yomboServer.mapFile( '/public/modules/sharedboard/sharedboard.html' );
 	this.yomboServer.mapFile( '/public/modules/sharedboard/ui_sharedboard.js' );
 	this.yomboServer.mapFile( '/public/modules/sharedboard/main_sharedboard.js' );
@@ -46,6 +44,8 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 	this.yomboServer.mapDirectory( '/public/lib/openui5' );
 
 	this.yomboServer.mapDirectory( '/public/lib/three' );
+
+	this.yomboServer.registerApplication( "SharedBoard", "A shared board for drawing", this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboard.html" ) );
 
 	console.log( "sharedboard module started" );
 
@@ -77,6 +77,7 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 	var referer = this.yomboServer.getClientReferer( client );
 	var index = referer.indexOf( "?room=" );
 	if ( index < 0 ) {
+		client.socket.emit( "yssbError", "Please specify a room name with parameter, \"?room=<room_name>\"" );
 		return;
 	}
 	var roomName = referer.substring( index + 6 );
@@ -84,6 +85,10 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 	var room = this.yomboServer.findRoom( this, roomName );
 	if ( room === null ) {
 		room = this.yomboServer.createRoom( this, roomName );
+		if ( room === null ) {
+			client.socket.emit( "yssbError", "Sorry, server is plenty of rooms. Please try again later." );
+			return;
+		}
 		room.sharedboard = {
 			latestPaintCommands: [ this.createEraseWhiteCommand() ]
 		}

@@ -1,5 +1,7 @@
 {
 
+    "host": "yombo.org",
+
     "listenPort": 12345,
 
     "launchConfigurations": [
@@ -11,10 +13,18 @@
             }
         },
         {
+            "name": "appreg",
+            "instanceName": "theAppReg",
+            "enabled": true,
+            "config": {
+            }
+        },
+        {
             "name": "sharedboard",
             "instanceName": "thesharedboard",
             "enabled": true,
             "config": {
+                "maxRooms": 5,
                 "commandStorageClean": 500
             }
         },
@@ -23,11 +33,6 @@
             "instanceName": "theRTCSignalServer",
             "enabled": false,
             "config": {
-                "initialRooms": [
-                    {
-                        "name": "homeWebcam"
-                    }
-                ]
             }
         },
         {
@@ -71,6 +76,11 @@
     "moduleDefinitions": [
         {
             "name": "admin",
+            "uniqueInstance": true,
+            "canStop": false
+        },
+        {
+            "name": "appreg",
             "uniqueInstance": true,
             "canStop": false
         },

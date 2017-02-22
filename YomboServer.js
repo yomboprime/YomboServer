@@ -54,7 +54,9 @@ YomboServer.TheServer = function () {
 		"clientConnected",
 		"clientDisconnected",
 		"clientConnectedToModule",
-		"clientDisconnectedFromModule"
+		"clientDisconnectedFromModule",
+		"registerApplication",
+		"unregisterApplication"
 	];
 	this.listeners = {};
 	for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i++ ) {
@@ -66,6 +68,11 @@ YomboServer.TheServer = function () {
 	// Clients
 	this.clients = [];
 
+	// Registered applications
+	this.applications = [];
+
+	this.LOCAL_HOST_V4 = "::ffff:127.0.0.1";
+	this.LOCAL_HOST_V6 = "::1";
 };
 
 YomboServer.TheServer.prototype = {
@@ -96,6 +103,40 @@ YomboServer.TheServer.prototype.run = function() {
         res.sendFile( __dirname + '/public/index.html' );
 
     } );
+
+	var scope = this;
+
+	// Serve Application registry service
+    var appRegFunction = function( req, res ) {
+
+		var result = "ERROR";
+
+		if ( scope.isLocalRequest( req ) ) {
+			var params = scope.getRequestParameters( req );
+			var appURL = scope.findRequestParameter( params, "appURL" );
+			if ( appURL ) {
+				var action = scope.findRequestParameter( params, "action" );
+				if ( action === "register") {
+					var appName = scope.findRequestParameter( params, "appName" );
+					if ( appName ) {
+						var appDescription = scope.findRequestParameter( params, "appDescription" );
+						if ( ! appDescription ) {
+							appDescription = "";
+						}
+						scope.registerApplication( appName, appDescription, appURL );
+						result = "OK";
+					}
+				}
+				else if ( action === "unregister" ) {
+					scope.unregisterApplication( appURL )
+					result = "OK";
+				}
+			}
+		}
+		res.end( result );
+    };
+	app.get( '/appRegService', appRegFunction );
+	app.post( '/appRegService', appRegFunction );
 
     // Setup connection with client
 	var scope = this;
@@ -487,6 +528,45 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 
 // *****  Services *****
 
+// ***** Regiter application service *****
+
+YomboServer.TheServer.prototype.registerApplication = function( name, description, url ) {
+
+	var found = false;
+	for ( var i = 0; i < this.applications.length; i++ ) {
+		var app = this.applications[ i ];
+		if ( app.url === url ) {
+			app.name = name;
+			app.description = description;
+			found = true;
+		}
+	}
+
+	if ( ! found ) {
+		this.applications.push( {
+			name: name,
+			description: description,
+			url: url
+		} );
+	}
+
+	this.talkToListeners( "registerApplication", null );
+
+};
+
+YomboServer.TheServer.prototype.unregisterApplication = function( url ) {
+
+	for ( var i = 0; i < this.applications.length; i++ ) {
+		if ( this.applications[ i ].url === url ) {
+
+			this.applications.splice( i, 1 );
+			this.talkToListeners( "unregisterApplication", null );
+
+		}
+	}
+
+};
+
 // ***** Rooms service *****
 
 YomboServer.TheServer.prototype.internalRoomName = function( module, roomName ) {
@@ -495,12 +575,26 @@ YomboServer.TheServer.prototype.internalRoomName = function( module, roomName ) 
 	
 };
 
+YomboServer.TheServer.prototype.getModuleMaxRooms = function( module ) {
+
+	if ( module.config.maxRooms > 0 ) {
+		return module.config.maxRooms;
+	}
+
+	return 0;
+
+}
 
 YomboServer.TheServer.prototype.createRoom = function( module, roomName ) {
 
 	var room = this.findRoom( module, roomName );
 	if ( room !== null ) {
 		return room;
+	}
+
+	var maxRooms = this.getModuleMaxRooms( module );
+	if ( module.rooms.length >= maxRooms ) {
+		return null;
 	}
 
 	// In addition to these members, the room will have an object named after the module it belongs to.
@@ -576,7 +670,15 @@ YomboServer.TheServer.prototype.emitToRoom = function( room, name, message ) {
 
 YomboServer.TheServer.prototype.isLocalClient = function( client ) {
 
-	return "::ffff:127.0.0.1" === client.socket.handshake.address;
+	return this.LOCAL_HOST_V4 === client.socket.handshake.address ||
+		   this.LOCAL_HOST_V6 === client.socket.handshake.address;
+
+};
+
+YomboServer.TheServer.prototype.isLocalRequest = function( req ) {
+
+	return this.LOCAL_HOST_V4 === req.connection.remoteAddress ||
+		   this.LOCAL_HOST_V6 === req.connection.remoteAddress;
 
 };
 
@@ -638,7 +740,53 @@ YomboServer.TheServer.prototype.getClientReferer = function( client ) {
 
 	return client.socket.client.request.headers.referer;
 	
-}
+};
+
+YomboServer.TheServer.prototype.getRequestParameters = function( request ) {
+
+	var params = [];
+
+	var url = decodeURI( request.url );
+
+	var index = url.indexOf( "?" );
+	if ( index >= 0 ) {
+		var paramString = url.substring( index + 1 );
+		var paramStringArray = paramString.split( "&" );
+		for ( var i = 0; i < paramStringArray.length; i++ ) {
+			var p = paramStringArray[ i ];
+			var index2 = p.indexOf( "=" );
+			if ( index2 >= 0 ) {
+				params.push( {
+					name: p.substring( 0, index2 ),
+					value: p.substring( index2 + 1 )
+				} );
+			}
+		}
+
+	}
+
+	return params;
+
+};
+
+YomboServer.TheServer.prototype.findRequestParameter = function( params, paramName ) {
+
+	for ( var i = 0; i < params.length; i++ ) {
+		if ( params[ i ].name === paramName ) {
+			return params[ i ].value;
+		}
+	}
+
+	return null;
+
+};
+
+YomboServer.TheServer.prototype.gethostURL = function( path ) {
+
+	return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
+
+};
+
 
 // ***** Module Administration Services *****
 
