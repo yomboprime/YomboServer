@@ -15,6 +15,10 @@ function init() {
 
 	} );
 
+	socket.on( "disconnect", function( msg ) {
+		alert( "The connection with the server was closed." );
+	} );
+
 	socket.emit( "ysConnectToModule", { moduleName: "appreg" } );
 
 }
@@ -29,12 +33,12 @@ function initUI( applications ) {
 
     dialog.setModal( true );
 
-    dialog.setTitle( "Yomboserver applications" );
+    dialog.setTitle( "YomboServer applications" );
 
     dialog.setWidth( "800px" );
     dialog.setHeight( "550px" );
     dialog.addStyleClass( "unselectable" );
-    dialog.setKeepInWindow( true );
+//    dialog.setKeepInWindow( true );
 
     var appsItems = [ ];
     for ( var i = 0; i < applications.length; i++ ) {

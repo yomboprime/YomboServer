@@ -40,25 +40,30 @@ CameraCapture.CameraCapture.prototype = {
 
 CameraCapture.CameraCapture.prototype.start = function( config ) {
 
+	// Returns null on success, or error string
+
 	this.config = config;
 
-	this.cam = new v4l2camera.Camera( this.config.device );
+	try {
+		this.cam = new v4l2camera.Camera( this.config.device );
+	}
+	catch ( e ) {
+		return "Couldn't open the media device (device not found)";
+	}
 
 	var format = this.selectCameraFormat( this.cam.formats, this.config );
 
 	if ( format === null ) {
-		// TODO set status to error
-		//console.log( "Error: camcap module: couldn't open camera device (no suitable format found) on " + this.config.device );
+		return "Couldn't open media device (no suitable format found)";
 	}
-	else {
 
-		this.cam.configSet( format );
+	this.cam.configSet( format );
 
-		this.cam.start();
+	this.cam.start();
 
-		this.started = true;
+	this.started = true;
 
-	}
+	return null;
 
 };
 

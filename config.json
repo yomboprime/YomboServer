@@ -1,6 +1,6 @@
 {
 
-    "host": "yombo.org",
+    "host": "localhost",
 
     "listenPort": 12345,
 

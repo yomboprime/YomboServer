@@ -6,6 +6,8 @@ var sharedboard = function() {
 	this.presentationCanvas = null;
 
 	this.socket = null;
+
+	this.instanceName = null;
 	
 	this.currentToolState = {
 
@@ -19,6 +21,8 @@ var sharedboard = function() {
 	};
 
 	this.guiStateDown = false;
+
+	this.connectedToModule = false;
 
 };
 
@@ -705,6 +709,8 @@ sharedboard.prototype.init = function( firstCanvas, presentationCanvas, socket, 
 
 	this.socket = socket;
 
+	this.instanceName = instanceName;
+
 	var scope = this;
 
 	socket.on( "yssbPaintCommand", function( msg ) {
@@ -724,6 +730,21 @@ sharedboard.prototype.init = function( firstCanvas, presentationCanvas, socket, 
 		alert( msg );
 
 	} );
+
+	socket.on( "ysConnectedToModule", function( msg ) {
+		scope.connectedToModule = true;
+	} );
+
+	socket.on( "ysDisconnectedFromModule", function( msg ) {
+		alert( "The connection with the server was closed." );
+		scope.connectedToModule = false;
+	} );
+
+	socket.on( "disconnect", function( msg ) {
+		alert( "The connection with the server was closed." );
+	} );
+
+	scope.connectedToModule = true;
 
 	socket.emit( "ysConnectToModule", { moduleName: "sharedboard", instanceName: instanceName } );
 
@@ -762,6 +783,10 @@ sharedboard.prototype.drawLocal = function( command ) {
 };
 
 sharedboard.prototype.sendCommandArray = function( commandArray ) {
+
+	if ( ! this.connectedToModule ) {
+		this.socket.emit( "ysConnectToModule", { moduleName: "sharedboard", instanceName: this.instanceName } );
+	}
 
 	this.socket.emit( "yssbPaintCommand", commandArray );
 

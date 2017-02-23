@@ -39,11 +39,15 @@ process.on( "message", function( message ) {
 
 		camcap = new CameraCapture.CameraCapture();
 
-		camcap.start( config );
+		var error = camcap.start( config );
 
-//process.send( { what: "debug", debug: "Child process camcap started ok: " + camcap.started } );
-
-		setTimeout( captureFunction, config.captureIntervalMs );
+		if ( error ) {
+			process.send( { what: "error", error: error } );
+			process.exit( -1 );
+		}
+		else {
+			setTimeout( captureFunction, config.captureIntervalMs );
+		}
 
 	}
 	else if ( what === "requestTermination" ) {
@@ -53,4 +57,3 @@ process.on( "message", function( message ) {
 	}
 
 } );
-

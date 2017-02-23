@@ -69,6 +69,13 @@ camcap.camcap.prototype.start = function( onStart ) {
 			scopeModule.yomboServer.emitToClientsArray( scopeModule.clients, "ysCamcapFrame", scopeModule.lastFrame );
 
 		}
+		else if ( what === "error" ) {
+
+			scopeModule.yomboServer.stopModule( scopeModule, function() {
+				console.log( "camcap module terminated due to subprocess error: " + message.error );
+			} );
+
+		}
 		else if ( what === "debug" ) {
 
 			console.log( "Child process debug: " + message.debug );
@@ -78,6 +85,8 @@ camcap.camcap.prototype.start = function( onStart ) {
 	} );
 
 	this.camcapChildProcess.on( "exit", function() {
+
+		scopeModule.camcapChildProcess = null;
 
 		if ( scopeModule.onTermination ) {
 
@@ -120,9 +129,15 @@ camcap.camcap.prototype.start = function( onStart ) {
 
 camcap.camcap.prototype.stop = function( onStop ) {
 
-	this.onTermination = onStop;
-
-	this.camcapChildProcess.send( { what: "requestTermination" } );
+	if ( this.camcapChildProcess ) {
+		this.onTermination = onStop;
+		this.camcapChildProcess.send( { what: "requestTermination" } );
+	}
+	else {
+		if ( onStop ) {
+			onStop();
+		}
+	}
 
 };
 

@@ -45,6 +45,8 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 
 	this.yomboServer.mapDirectory( '/public/lib/three' );
 
+	this.clientEvents.push( "yssbGetLatestData", "yssbPaintCommand" );
+
 	this.yomboServer.registerApplication( "SharedBoard", "A shared board for drawing", this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboard.html" ) );
 
 	console.log( "sharedboard module started" );
@@ -58,6 +60,8 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 };
 
 sharedboard.sharedboard.prototype.stop = function( onStop ) {
+
+	this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboard.html" ) );
 
 	console.log( "sharedboard module stopped." );
 
@@ -105,7 +109,7 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 	client.socket.on( "yssbGetLatestData", function( msg ) {
 
-		console.log( "Some client sent yssbGetLatestData message. *****" );
+		//console.log( "Some client sent yssbGetLatestData message. *****" );
 
 		client.socket.emit( "yssbPaintCommand", room.sharedboard.latestPaintCommands );
 
@@ -113,7 +117,7 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 	client.socket.on( "yssbPaintCommand", function( msg ) {
 
-		console.log( "Some client sent paint command." );
+		//console.log( "Some client sent paint command." );
 
 		scope.yomboServer.emitToRoom( room, "yssbPaintCommand", msg );
 

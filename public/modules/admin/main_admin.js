@@ -15,8 +15,6 @@ function init() {
 
     socket = io();
 
-    socket.emit( "ysConnectToModule", { moduleName: "admin" } );
-
     socket.on( "ysAdminAllData", function( msg ) {
 
 		var modules = msg.modules;
@@ -63,7 +61,7 @@ function init() {
 
 	socket.on( "ysAdminClientConnectedToModule", function( msg ) {
 
-console.log( "Client connected to module instance: " + msg.instanceName );
+		console.log( "Client connected to module instance: " + msg.instanceName );
 
 		setClientCountModule( msg.instanceName, msg.numberOfClients );
 
@@ -74,6 +72,12 @@ console.log( "Client connected to module instance: " + msg.instanceName );
 		setClientCountModule( msg.instanceName, msg.numberOfClients );
 
 	} );
+
+	socket.on( "disconnect", function( msg ) {
+		alert( "The connection with the server was closed." );
+	} );
+
+	socket.emit( "ysConnectToModule", { moduleName: "admin" } );
 
 }
 

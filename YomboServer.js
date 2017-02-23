@@ -113,13 +113,13 @@ YomboServer.TheServer.prototype.run = function() {
 
 		if ( scope.isLocalRequest( req ) ) {
 			var params = scope.getRequestParameters( req );
-			var appURL = scope.findRequestParameter( params, "appURL" );
+			var appURL = scope.searchByValue( params, "name", appURL );
 			if ( appURL ) {
-				var action = scope.findRequestParameter( params, "action" );
+				var action = scope.searchByValue( params, "name", "action" );
 				if ( action === "register") {
-					var appName = scope.findRequestParameter( params, "appName" );
+					var appName = scope.searchByValue( params, "name", "appName" );
 					if ( appName ) {
-						var appDescription = scope.findRequestParameter( params, "appDescription" );
+						var appDescription = scope.searchByValue( params, "name", "appDescription" );
 						if ( ! appDescription ) {
 							appDescription = "";
 						}
@@ -359,6 +359,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	module.clients = [];
 	module.yomboServer = this;
 	module.rooms = [];
+	module.clientEvents = [];
 
 	this.modules.push( module );
 
@@ -402,6 +403,16 @@ YomboServer.TheServer.prototype.stopModule = function( module, onStop ) {
 		return msg;
 
 	}
+
+	// Emit module disconnection event
+	this.emitToClientsArray( module.clients, "ysDisconnectedFromModule", { moduleName: module.name, instanceName: module.instanceName } );
+
+	// Remove module clients sockets listeners
+	for ( var i = 0; i < module.clients.length; i++ ) {
+		this.removeClientEvents( module, module.clients[ i ] );
+	}
+
+	module.clients = [];
 
 	var scope = this;
 	module.stop( function() {
@@ -477,6 +488,16 @@ YomboServer.TheServer.prototype.getInstanceName = function( module, instanceName
 	}
 
 	return instanceName;
+
+};
+
+YomboServer.TheServer.prototype.removeClientEvents = function( module, client ) {
+
+	var socket = client.socket;
+	var events = module.clientEvents;
+	for ( var i = 0; i < events.length; i++ ) {
+		socket.removeAllListeners( events[ i ] );
+	}
 
 };
 
@@ -631,13 +652,8 @@ YomboServer.TheServer.prototype.removeRoom = function( module, roomName ) {
 YomboServer.TheServer.prototype.findRoom = function( module, roomName ) {
 
 	var internalName = this.internalRoomName( module, roomName );
-	for ( var i = 0; i < module.rooms.length; i++ ) {
-		if ( module.rooms[ i ].internalName === internalName ) {
-			return module.rooms[ i ];
-		}
-	}
 
-	return null;
+	return this.searchByValue( module.rooms, "internalName", internalName );
 
 };
 
@@ -769,18 +785,6 @@ YomboServer.TheServer.prototype.getRequestParameters = function( request ) {
 
 };
 
-YomboServer.TheServer.prototype.findRequestParameter = function( params, paramName ) {
-
-	for ( var i = 0; i < params.length; i++ ) {
-		if ( params[ i ].name === paramName ) {
-			return params[ i ].value;
-		}
-	}
-
-	return null;
-
-};
-
 YomboServer.TheServer.prototype.gethostURL = function( path ) {
 
 	return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
@@ -859,7 +863,8 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 		isGod: false,
 		socket: socket,
-		connectedModules: []
+		connectedModules: [],
+		events: []
 
 	};
 
@@ -928,24 +933,25 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 		if ( module !== null ) {
 
-			module.clientConnection( client );
-
 			var index = client.connectedModules.indexOf( module );
 
 			if ( index < 0 ) {
 
 				client.connectedModules.push( module );
 
+				if ( module.clients.indexOf( client ) < 0 ) {
+
+					module.clients.push( client );
+
+				}
+
+				module.clientConnection( client );
+
+				scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
+
+				socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
+
 			}
-
-			if ( module.clients.indexOf( client ) < 0 ) {
-				
-				module.clients.push( client );
-
-			}
-
-			scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
-
 
 		}
 

@@ -8,9 +8,14 @@ Personal server with custom applications
 
 ### General Yomboserver Messages
 
-Client --> module
+Client --> YomboServer
 
  - `"ysConnectToModule"`
+
+YomboServer --> Client
+
+- `"ysConnectedToModule"`
+- `"ysDisconnectedFromModule"`
 
 ### `admin` Module
 
@@ -81,6 +86,7 @@ admin:
     restart all modules
     shutdown all modules
     shutdown server
+    log
 
 camcap module:
     make failure modes recovery
@@ -91,7 +97,6 @@ webrtc module:
  V - mirar si el server se puede integrar en modulo yomboserver
    - probar a no usar el bundle, usando mi socket.io
  V - probar casos de uso
- N - el admin puede marcar un podcast como privado (por defecto es así) y los clientes no transmisores no pueden verlo.
 
 
 ## IDEAS
@@ -111,13 +116,13 @@ Multi videochat with shared drawing board, ... think more ideas:
     - Image (select rectangle and then pop-up to select file)
     - First select rectangle, or click to cover all the board. 3d file (front/side/up/back/otherside/bottom/up to 4 of them) (.stl, .obj, .dae). Put a check to override material with color.
 
-V - save board image to file / copy image. --- (Already implemented in browsers)
+ - save board image to file / copy image.
 
 V - the board is resolution independent, all positions/sizes are relative to [0,1]
 
 V - client canvas is resizable
 
- - the client stores all actions from the last "board erase", applies them if client canvas is resized
+V - the client stores all actions from the last "board erase", applies them if client canvas is resized
 
  - multi-user undo of N steps: must use the client cache previously mentioned
 

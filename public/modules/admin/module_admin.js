@@ -93,6 +93,8 @@ admin.admin.prototype.start = function( onStart ) {
 
 	} );
 
+	this.clientEvents.push( "ysAdminStartModule", "ysAdminStopModule" );
+
 	this.yomboServer.registerApplication( "Admin", "Admin page", this.yomboServer.gethostURL( "public/modules/admin/admin.html" ) );
 
 	console.log( "Administration module started." );
@@ -144,8 +146,6 @@ admin.admin.prototype.clientConnection = function( client ) {
 		};
 	}
 
-	client.socket.emit( "ysAdminAllData", msg );
-
 	var scope = this;
 	client.socket.on( "ysAdminStartModule", function( msg ) {
 
@@ -183,6 +183,8 @@ admin.admin.prototype.clientConnection = function( client ) {
 		}
 
 	} );
+
+	client.socket.emit( "ysAdminAllData", msg );
 
 };
 
