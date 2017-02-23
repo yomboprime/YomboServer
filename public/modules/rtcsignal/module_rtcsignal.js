@@ -1,5 +1,5 @@
 
-var easyrtc = require( "../../lib/easyrtc/lib/easyrtc_server" );
+var easyrtc = require( "easyrtc" );
 
 var rtcsignal = {
 
