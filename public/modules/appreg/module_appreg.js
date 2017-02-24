@@ -72,7 +72,7 @@ appreg.appreg.prototype.stop = function( onStop ) {
 
 appreg.appreg.prototype.clientConnection = function( client ) {
 
-	console.log( "Admin module: Client connected." );
+	console.log( "Application Registry module: Client connected." );
 
 	client.socket.emit( "ysAppReg", this.getApplicationsMessage() );
 
@@ -80,7 +80,7 @@ appreg.appreg.prototype.clientConnection = function( client ) {
 
 appreg.appreg.prototype.clientDisconnection = function( client ) {
 
-	console.log( "Admin module: Client disconnected." );
+	console.log( "Application Registry module: Client disconnected." );
 
 };
 

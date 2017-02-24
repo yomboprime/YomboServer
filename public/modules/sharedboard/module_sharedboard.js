@@ -38,6 +38,8 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 	this.yomboServer.mapFile( '/public/modules/sharedboard/ui_sharedboard.js' );
 	this.yomboServer.mapFile( '/public/modules/sharedboard/main_sharedboard.js' );
 	this.yomboServer.mapFile( '/public/modules/sharedboard/sharedboard.js' );
+	this.yomboServer.mapFile( '/public/modules/sharedboard/sharedboardLoader.html' );
+	this.yomboServer.mapFile( '/public/modules/sharedboard/sharedboardLoader.js' );
 
 	this.yomboServer.mapDirectory( '/public/assets/icons/sharedboard' );
 
@@ -47,7 +49,7 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 
 	this.clientEvents.push( "yssbGetLatestData", "yssbPaintCommand" );
 
-	this.yomboServer.registerApplication( "SharedBoard", "A shared board for drawing", this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboard.html" ) );
+	this.yomboServer.registerApplication( "SharedBoard", "A shared board for drawing", this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboardLoader.html" ) );
 
 	console.log( "sharedboard module started" );
 
@@ -77,14 +79,21 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 	console.log( "sharedboard: Client connected." );
 
-	// Get the room name from the referer url
-	var referer = this.yomboServer.getClientReferer( client );
+	// Get the room name from client url parameter
+	var params = this.yomboServer.getClientParameters( client );
+	var roomName = this.yomboServer.searchByValue( params, "name", "room" );
+	if ( ! roomName ) {
+		client.socket.emit( "yssbError", "Please specify a room name with parameter, \"?room=<room_name>\"" );
+		return;
+	}
+	/*
 	var index = referer.indexOf( "?room=" );
 	if ( index < 0 ) {
 		client.socket.emit( "yssbError", "Please specify a room name with parameter, \"?room=<room_name>\"" );
 		return;
 	}
 	var roomName = referer.substring( index + 6 );
+	*/
 
 	var room = this.yomboServer.findRoom( this, roomName );
 	if ( room === null ) {

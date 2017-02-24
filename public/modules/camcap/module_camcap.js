@@ -42,10 +42,10 @@ camcap.camcap.prototype.start = function( onStart ) {
 
 	console.log( "camcap module starting on " + this.config.device );
 
-	this.yomboServer.mapFile( '/public/camcap.html' );
+	this.yomboServer.mapFile( '/public/modules/camcap/camcap.html' );
 	this.yomboServer.mapFile( '/public/modules/camcap/main_camcap.js' );
 
-	this.yomboServer.mapFile( '/public/camcap2.html' );
+	this.yomboServer.mapFile( '/public/modules/camcap/camcap2.html' );
 	this.yomboServer.mapFile( '/public/modules/camcap/main_camcap2.js' );
 
 

@@ -112,8 +112,8 @@ YomboServer.TheServer.prototype.run = function() {
 		var result = "ERROR";
 
 		if ( scope.isLocalRequest( req ) ) {
-			var params = scope.getRequestParameters( req );
-			var appURL = scope.searchByValue( params, "name", appURL );
+			var params = scope.getURLParameters( req.url );
+			var appURL = scope.searchByValue( params, "name", "appURL" );
 			if ( appURL ) {
 				var action = scope.searchByValue( params, "name", "action" );
 				if ( action === "register") {
@@ -752,17 +752,21 @@ YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, mess
 
 };
 
+YomboServer.TheServer.prototype.getClientParameters = function( client ) {
+	return this.getURLParameters( this.getClientReferer( client ) );
+}
+
 YomboServer.TheServer.prototype.getClientReferer = function( client ) {
 
 	return client.socket.client.request.headers.referer;
 	
 };
 
-YomboServer.TheServer.prototype.getRequestParameters = function( request ) {
+YomboServer.TheServer.prototype.getURLParameters = function( url ) {
 
 	var params = [];
 
-	var url = decodeURI( request.url );
+	var url = decodeURI( url );
 
 	var index = url.indexOf( "?" );
 	if ( index >= 0 ) {
