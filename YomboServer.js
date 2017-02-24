@@ -116,19 +116,20 @@ YomboServer.TheServer.prototype.run = function() {
 			var appURL = scope.searchByValue( params, "name", "appURL" );
 			if ( appURL ) {
 				var action = scope.searchByValue( params, "name", "action" );
-				if ( action === "register") {
+				if ( action.value === "register") {
 					var appName = scope.searchByValue( params, "name", "appName" );
 					if ( appName ) {
+						var description = "";
 						var appDescription = scope.searchByValue( params, "name", "appDescription" );
-						if ( ! appDescription ) {
-							appDescription = "";
+						if ( appDescription ) {
+							description = appDescription.value;
 						}
-						scope.registerApplication( appName, appDescription, appURL );
+						scope.registerApplication( appName.value, description, appURL.value );
 						result = "OK";
 					}
 				}
-				else if ( action === "unregister" ) {
-					scope.unregisterApplication( appURL )
+				else if ( action.value === "unregister" ) {
+					scope.unregisterApplication( appURL.value )
 					result = "OK";
 				}
 			}

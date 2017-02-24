@@ -95,9 +95,9 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 	var roomName = referer.substring( index + 6 );
 	*/
 
-	var room = this.yomboServer.findRoom( this, roomName );
+	var room = this.yomboServer.findRoom( this, roomName.value );
 	if ( room === null ) {
-		room = this.yomboServer.createRoom( this, roomName );
+		room = this.yomboServer.createRoom( this, roomName.value );
 		if ( room === null ) {
 			client.socket.emit( "yssbError", "Sorry, server is plenty of rooms. Please try again later." );
 			return;
@@ -163,6 +163,15 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 sharedboard.sharedboard.prototype.clientDisconnection = function( client ) {
 
 	console.log( "sharedboard: Client disconnected." );
+
+	var room = client.sharedboard.room;
+
+	if ( room.clients.length <= 1 ) {
+		this.yomboServer.removeRoom( this, room.name );
+	}
+	else {
+		this.yomboServer.removeClientFromRoom( client, room );
+	}
 
 };
 
