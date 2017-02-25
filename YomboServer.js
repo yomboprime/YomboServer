@@ -627,7 +627,7 @@ YomboServer.TheServer.prototype.registerApplication = function( name, descriptio
 	}
 
 	if ( ! found ) {
-		this.applications.push( {
+		this.applications.unshift( {
 			name: name,
 			description: description,
 			url: url
