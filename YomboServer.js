@@ -980,8 +980,6 @@ YomboServer.TheServer.prototype.talkToListeners = function( functionName, params
 
 YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
-	this.logInfo( "Client connected: " + socket.id, "YomboServer.clientConnection" );
-
 	// In addition to these members, clients will have objects named after the modules they connect to
 	var client = {
 
@@ -1078,5 +1076,7 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 		}
 
 	} );
+
+	this.logInfo( "Client connected: " + socket.id, "YomboServer.clientConnection" );
 
 };

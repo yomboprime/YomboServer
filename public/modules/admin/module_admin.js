@@ -91,6 +91,12 @@ admin.admin.prototype.start = function( onStart ) {
 
 	} );
 
+	this.yomboServer.registerListener( this, "log", function( logEntry ) {
+
+		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminLog", logEntry );
+
+	} );
+
 	this.clientEvents.push( "ysAdminStartModule", "ysAdminStopModule" );
 
 	this.yomboServer.registerApplication( "Admin", "Admin page", this.yomboServer.gethostURL( "public/modules/admin/admin.html" ) );

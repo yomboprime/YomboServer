@@ -28,6 +28,7 @@ Module --> Client:
  - `"ysAdminClientDisconnected"`
  - `"ysAdminClientConnectedToModule"`
  - `"ysAdminClientDisconnectedFromModule"`
+ - `"ysAdminLog"`
 
 Client --> module
 

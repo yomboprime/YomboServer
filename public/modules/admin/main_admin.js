@@ -2,6 +2,7 @@
 // Next number for unique grid record ids
 var moduleRecId = 1;
 var launchConfigurationRecId = 1;
+var logRecId = 1;
 
 var totalNumberOfClients = 0;
 
@@ -61,8 +62,6 @@ function init() {
 
 	socket.on( "ysAdminClientConnectedToModule", function( msg ) {
 
-		console.log( "Client connected to module instance: " + msg.instanceName );
-
 		setClientCountModule( msg.instanceName, msg.numberOfClients );
 
 	} );
@@ -70,6 +69,14 @@ function init() {
 	socket.on( "ysAdminClientDisconnectedFromModule", function( msg ) {
 
 		setClientCountModule( msg.instanceName, msg.numberOfClients );
+
+	} );
+	
+	socket.on( "ysAdminLog", function( logEntry ) {
+
+		//console.log( "LOG: " + logEntry.message );
+
+		createLogUI( logEntry );
 
 	} );
 
@@ -161,6 +168,43 @@ function initUI() {
 		}
 
 	};
+
+	// Log
+
+	$(function () {
+		$( '#logDiv' ).w2grid( {
+			name: 'logDiv',
+			header: "Server log",
+			multiSelect: false,
+			show: {
+				header: true
+			},
+			columns: [
+				{ field: 'recid', caption: 'Record id', size: '20px', sortable: true },
+				{ field: 'timestamp', caption: 'Time', size: '140px', sortable: true },
+				{ field: 'type', caption: 'Type', size: '80px', sortable: true },
+				{ field: 'category', caption: 'Category', size: '150px', sortable: true },
+				{ field: 'moduleName', caption: 'Module name', size: '120px', sortable: true },
+				{ field: 'instanceName', caption: 'Instance name', size: '120px', sortable: true },
+				{ field: 'message', caption: 'Message', size: '500px', sortable: false }
+			],
+			records: [],
+			total: 0
+		} );
+
+		w2ui[ 'logDiv' ].hideColumn( 'recid' );
+
+	} );
+
+	var btnClearLog = document.getElementById( "buttonClearLog" );
+	btnClearLog.onclick = function() {
+
+		w2ui.logDiv.records = [];
+		w2ui.logDiv.total = 0;
+		w2ui.logDiv.refresh();
+
+	};
+
 }
 
 function createModuleUI( module ) {
@@ -203,6 +247,16 @@ function createLaunchConfigurationUI( launchConfiguration ) {
 	w2ui.launchConfigurationsDiv.records.push( record );
 	w2ui.launchConfigurationsDiv.total = w2ui.launchConfigurationsDiv.records.length;
 	w2ui.launchConfigurationsDiv.refresh();
+
+}
+
+function createLogUI( logEntry ) {
+
+	logEntry.recid = logRecId++;
+
+	w2ui.logDiv.records.push( logEntry );
+	w2ui.logDiv.total = w2ui.logDiv.records.length;
+	w2ui.logDiv.refresh();
 
 }
 
