@@ -222,7 +222,7 @@ function initUI() {
 		$( '#logDiv' ).w2grid( {
 			name: 'logDiv',
 			header: "Server log",
-			selectType : 'cell',
+			multiSelect: false,
 			show: {
 				header: true
 			},
