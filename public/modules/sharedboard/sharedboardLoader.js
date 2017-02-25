@@ -69,20 +69,6 @@ function init() {
 
 	dialog.setInitialFocus( roomNameTextField );
 
-	//window.addEventListener( "resize", onWindowResize, false );
-
-	// First resize
-	//onWindowResize();
-
 	dialog.open();
 	
-}
-
-function onWindowResize() {
-
-	var w = window.innerWidth;
-	var h = window.innerHeight;
-
-	var size = Math.min( w, h );
-
 }
