@@ -11,10 +11,10 @@ var captureFunction = function() {
 
 	camcap.requestFrame( config, function( image ) {
 
-		if ( terminationMarked ) {
+		if ( terminationMarked || image === null ) {
 
 			camcap.requestTermination( function() {
-
+				
 				process.exit();
 
 			} );

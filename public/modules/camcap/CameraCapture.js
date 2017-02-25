@@ -83,7 +83,7 @@ CameraCapture.CameraCapture.prototype.requestFrame = function( config, onCapture
 		//console.log( "Captured image." );
 
 		if ( ! success ) {
-			//console.log( "Error: success=false when capturing frame." );
+			onCaptured( null );
 		}
 
 		//var frame = cam.frameRaw();
@@ -121,9 +121,7 @@ CameraCapture.CameraCapture.prototype.requestFrame = function( config, onCapture
 			
 		}
 
-		if ( image ) {
-			onCaptured( image );
-		}
+		onCaptured( image );
 
 		//fs.createWriteStream( path + "image-" + this.imageNumber + ".jpg" ).end( Buffer( frame ) );
 
@@ -135,7 +133,12 @@ CameraCapture.CameraCapture.prototype.requestFrame = function( config, onCapture
 
 CameraCapture.CameraCapture.prototype.requestTermination = function( onTerminated ) {
 
-	this.cam.stop( onTerminated );
+	try {
+		this.cam.stop( onTerminated );
+	}
+	catch ( e ) {
+		onTerminated();
+	}
 
 };
 

@@ -182,6 +182,17 @@ admin.admin.prototype.clientConnection = function( client ) {
 
 	} );
 
+	client.socket.on( "ysAdminGetAllTheLog", function( msg ) {
+
+		if ( ! client.isGod ) {
+			return;
+		}
+
+		client.socket.emit( "ysAdminAllTheLog", scope.yomboServer.theLog );
+
+	} );
+
+
 	client.socket.emit( "ysAdminAllData", msg );
 
 };

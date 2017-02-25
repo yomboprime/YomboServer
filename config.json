@@ -4,6 +4,8 @@
 
     "listenPort": 12345,
 
+    "maxLogSize": 500,
+
     "logConsoleTypes": [ "System", "Error", "Warning" ],
 
     "logConsoleFields": [ "timestamp", "type", "category", "instanceName", "moduleName", "message" ],
