@@ -37,6 +37,7 @@ admin.admin.prototype.start = function( onStart ) {
 	this.yomboServer.mapFile( "/public/modules/admin/admin.html" );
 	this.yomboServer.mapFile( "/public/modules/admin/main_admin.js" );
 	this.yomboServer.mapDirectory( "/public/lib/w2ui" );
+	this.yomboServer.mapDirectory( "/public/assets/icons/admin" );
 
 	var scope = this;
 	this.yomboServer.registerListener( this, "startModule", function( module ) {

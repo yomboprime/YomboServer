@@ -1,0 +1,9 @@
+
+Description:
+	Warning icon
+
+License:
+	CC0 Public Domain 
+
+Obtained from:
+	https://commons.wikimedia.org/wiki/File:Ambox_warning_orange.svg

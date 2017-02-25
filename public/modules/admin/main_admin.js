@@ -222,7 +222,7 @@ function initUI() {
 		$( '#logDiv' ).w2grid( {
 			name: 'logDiv',
 			header: "Server log",
-			multiSelect: true,
+			selectType : 'cell',
 			show: {
 				header: true
 			},
@@ -300,9 +300,31 @@ function createLaunchConfigurationUI( launchConfiguration ) {
 
 }
 
-function createLogUI( logEntry ) {
+function processLogEntry( logEntry ) {
 
 	logEntry.recid = logRecId++;
+
+	// Add html image icon to type field
+	switch ( logEntry.type ) {
+		case "Info":
+			logEntry.type = '<img src="/public/assets/icons/admin/info/info.png" height="16" width="16"> Info';
+			break;
+		case "System":
+			logEntry.type = '<img src="/favicon.png" height="16" width="16"> System';
+			break;
+		case "Warning":
+			logEntry.type = '<img src="/public/assets/icons/admin/warning/warning.png" height="16" width="16"> Warning';
+			break;
+		case "Error":
+			logEntry.type = '<img src="/public/assets/icons/admin/error//error.png" height="16" width="16"> Error';
+			break;
+	}
+
+}
+
+function createLogUI( logEntry ) {
+
+	processLogEntry( logEntry )
 
 	w2ui.logDiv.records.push( logEntry );
 	w2ui.logDiv.refresh();
@@ -320,7 +342,7 @@ function createLogUIAll( logEntries ) {
 	var n = logEntries.length;
 	for ( var i = 0; i < n; i++ ) {
 		var logEntry = logEntries[ i ];
-		logEntry.recid = logRecId++;
+		processLogEntry( logEntry );
 		w2ui.logDiv.records.push( logEntry );
 
 	}

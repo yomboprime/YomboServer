@@ -1,0 +1,9 @@
+
+Description:
+	Error icon
+
+License:
+	CC0 Public Domain 
+
+Obtained from:
+	https://pixabay.com/en/button-stop-red-cross-warning-31222/
