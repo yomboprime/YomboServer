@@ -106,6 +106,8 @@ admin.admin.prototype.start = function( onStart ) {
 
 admin.admin.prototype.stop = function( onStop ) {
 
+	// This module can't be stopped
+
 	if ( onStop ) {
 
 		onStop();

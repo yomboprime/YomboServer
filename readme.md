@@ -101,8 +101,13 @@ webrtc module:
    - probar a no usar el bundle, usando mi socket.io
  V - probar casos de uso
 
+   - Aplicacion multicliente: los emisores de video se han de registrar. los receptores de video primero reciben lista de transmisores registrados y luego se conectan a rtc.
+Si se registra un emisor y ya hay clientes en esa room, el servidor envia un mensaje a los clientes, que automaticamente les hace reiniciar (recargar la pagina)
+
 
 ## IDEAS
+
+------------
 
 Multi videochat with shared drawing board, ... think more ideas:
 
@@ -129,3 +134,21 @@ V - the client stores all actions from the last "board erase", applies them if c
 
  - multi-user undo of N steps: must use the client cache previously mentioned
 
+------------
+
+Teleconference one-to-one, desktop/mobile/wathever
+
+
+------------
+
+N cameras (emitters) to M clients (receivers), desktop/mobile/wathever
+
+ - emitters must register in the server
+
+ - new clients get list of registered emitters
+
+ - when a new emitter is registered, all clients from that room are automatically reset (page reload) via server message.
+
+
+
+------------

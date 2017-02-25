@@ -22,7 +22,6 @@ var fileToolDialog = null;
 var uiColorPicker = null;
 
 
-// Wait for gui library to load and then init application
 sap.ui.getCore().attachInit( function() {
 
 	init();

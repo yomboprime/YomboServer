@@ -21,6 +21,8 @@ init();
 
 function init() {
 
+	changeFavicon( "/public/assets/favicons/favicon_blue.png" );
+
 	initUI();
 
     socket = io();
@@ -146,8 +148,7 @@ function initUI() {
 				{ field: 'instanceName', caption: 'Instance name', size: '140px', sortable: true },
 				{ field: 'numberOfClients', caption: 'Number of clients', size: '120px', sortable: true }
 			],
-			records: [],
-			total: 0
+			records: []
 		} );
 
 		w2ui[ 'modulesDiv' ].hideColumn( 'recid' );
@@ -184,8 +185,7 @@ function initUI() {
 				{ field: 'name', caption: 'Module name', size: '120px', sortable: true },
 				{ field: 'instanceName', caption: 'Instance name', size: '140px', sortable: true }
 			],
-			records: [],
-			total: 0
+			records: []
 		} );
 
 		w2ui[ 'launchConfigurationsDiv' ].hideColumn( 'recid' );
@@ -213,7 +213,7 @@ function initUI() {
 		$( '#logDiv' ).w2grid( {
 			name: 'logDiv',
 			header: "Server log",
-			multiSelect: false,
+			multiSelect: true,
 			show: {
 				header: true
 			},
@@ -226,8 +226,7 @@ function initUI() {
 				{ field: 'instanceName', caption: 'Instance name', size: '120px', sortable: true },
 				{ field: 'message', caption: 'Message', size: '500px', sortable: false }
 			],
-			records: [],
-			total: 0
+			records: []
 		} );
 
 		w2ui[ 'logDiv' ].hideColumn( 'recid' );
@@ -243,7 +242,6 @@ function initUI() {
 	btnClearLog.onclick = function() {
 
 		w2ui.logDiv.records = [];
-		w2ui.logDiv.total = 0;
 		w2ui.logDiv.refresh();
 
 	};
@@ -263,7 +261,6 @@ function createModuleUI( module ) {
 	};
 
 	w2ui.modulesDiv.records.push( record );
-	w2ui.modulesDiv.total = w2ui.modulesDiv.records.length;
 	w2ui.modulesDiv.refresh();
 
 }
@@ -274,7 +271,6 @@ function destroyModuleUI( module ) {
 	for ( var i = 0, il = records.length; i < il; i++ ) {
 		if ( records[ i ].instanceName === module.instanceName ) {
 			records.splice( i, 1 );
-			w2ui.modulesDiv.total = records.length;
 			w2ui.modulesDiv.refresh();
 			break;
 		}
@@ -291,7 +287,6 @@ function createLaunchConfigurationUI( launchConfiguration ) {
 	};
 
 	w2ui.launchConfigurationsDiv.records.push( record );
-	w2ui.launchConfigurationsDiv.total = w2ui.launchConfigurationsDiv.records.length;
 	w2ui.launchConfigurationsDiv.refresh();
 
 }
@@ -301,7 +296,6 @@ function createLogUI( logEntry ) {
 	logEntry.recid = logRecId++;
 
 	w2ui.logDiv.records.push( logEntry );
-	w2ui.logDiv.total = w2ui.logDiv.records.length;
 	w2ui.logDiv.refresh();
 
 	w2ui.logDiv.scrollIntoView( w2ui.logDiv.records.length - 1 );
@@ -320,7 +314,6 @@ function createLogUIAll( logEntries ) {
 
 	}
 
-	w2ui.logDiv.total = w2ui.logDiv.records.length;
 	w2ui.logDiv.refresh();
 
 	w2ui.logDiv.scrollIntoView( w2ui.logDiv.records.length - 1 );

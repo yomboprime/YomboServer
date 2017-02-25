@@ -41,6 +41,10 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 	this.yomboServer.mapFile( "/public/modules/rtcsignal/audienceClient.html" );
 	this.yomboServer.mapFile( "/public/modules/rtcsignal/main_audienceClient.js" );
 
+	this.yomboServer.registerApplication( "Video viewer", "View video streams", this.yomboServer.gethostURL( "public/modules/rtcsignal/audienceClient.html" ) );
+	this.yomboServer.registerApplication( "Video transmitter", "Transmit video streams", this.yomboServer.gethostURL( "public/modules/rtcsignal/cameraClient.html" ) );
+
+
 	easyrtc.setOption( "logLevel", "debug" );
 
 	var scopeModule = this;
@@ -59,7 +63,7 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 			connectionObj.setField( "credential", msg.msgData.credential, { "isShared": false } );
 
-			scopeModule.logInfo( "[" + easyrtcid + "] Credential saved! " + connectionObj.getFieldValueSync( "credential" ), "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
+			scopeModule.yomboServer.logInfo( "[" + easyrtcid + "] Credential saved! " + connectionObj.getFieldValueSync( "credential" ), "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
 
 			callback(err, connectionObj);
 		} );
@@ -68,7 +72,7 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 	// To test, lets print the credential to the console for every room join!
 	easyrtc.events.on( "roomJoin", function( connectionObj, roomName, roomParameter, callback ) {
 
-		scopeModule.logInfo( "[" + connectionObj.getEasyrtcid() + "] Credential retrieved! " + connectionObj.getFieldValueSync( "credential" ), "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
+		scopeModule.yomboServer.logInfo( "[" + connectionObj.getEasyrtcid() + "] Credential retrieved! " + connectionObj.getFieldValueSync( "credential" ), "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
 
 		easyrtc.events.defaultListeners.roomJoin( connectionObj, roomName, roomParameter, callback );
 
@@ -92,7 +96,7 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 		rtcRef.events.on( "roomCreate", function( appObj, creatorConnectionObj, roomName, roomOptions, callback ) {
 
-			scopeModule.logInfo( "roomCreate fired! Trying to create: " + roomName, "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
+			scopeModule.yomboServer.logInfo( "roomCreate fired! Trying to create: " + roomName, "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
 
 			appObj.events.defaultListeners.roomCreate( appObj, creatorConnectionObj, roomName, roomOptions, callback );
 
@@ -108,6 +112,11 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 };
 
 rtcsignal.rtcsignal.prototype.stop = function( onStop ) {
+
+	// TODO !!!
+
+	this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/rtcsignal/audienceClient.html" ) );
+	this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/rtcsignal/cameraClient.html" ) );
 
 	if ( onStop ) {
 

@@ -3,9 +3,13 @@ var socket;
 
 var dialog;
 
-init();
+sap.ui.getCore().attachInit( function() {
+	init();
+} );
 
 function init() {
+
+	changeFavicon( "/favicon.png" );
 
     socket = io();
 

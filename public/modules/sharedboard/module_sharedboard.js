@@ -61,7 +61,7 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 
 sharedboard.sharedboard.prototype.stop = function( onStop ) {
 
-	this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboard.html" ) );
+	this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboardLoader.html" ) );
 
 	if ( onStop ) {
 

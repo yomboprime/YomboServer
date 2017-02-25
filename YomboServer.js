@@ -167,6 +167,19 @@ YomboServer.TheServer.prototype.serveInternalServices = function() {
 
     } );
 
+	// Serve favicon
+	this.app.get( '/favicon.png', function( req, res ) {
+
+        res.sendFile( __dirname + '/public/favicon.png' );
+
+    } );
+
+	// Serve changefavicon lib
+	this.mapFile( "/public/lib/changefavicon/changefavicon.js" );
+
+	// Serve favicons asset directory
+	this.mapDirectory( '/public/assets/favicons' );
+
 	var scope = this;
 
 	// Serve Application registry service
