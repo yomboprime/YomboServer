@@ -1,7 +1,9 @@
 
 var YomboServer = {
 
-	VERSION_STRING: "r1"
+	VERSION_STRING: "r1",
+
+	DEFAULT_MAX_LOG_SIZE: 100
 
 };
 
@@ -31,6 +33,8 @@ YomboServer.TheServer = function () {
 
 	this.config = null;
 
+	this.theLog = [];
+
 	// Active modules
 	this.modules = [];
 
@@ -44,9 +48,6 @@ YomboServer.TheServer = function () {
 	this.express = express;
 	this.io = io;
 
-	// Serve /public directory
-//	this.mapDirectory( '/public' );
-
 	// Listeners
 	this.listenerFunctionNames = [
 		"startModule",
@@ -56,7 +57,9 @@ YomboServer.TheServer = function () {
 		"clientConnectedToModule",
 		"clientDisconnectedFromModule",
 		"registerApplication",
-		"unregisterApplication"
+		"unregisterApplication",
+		"log",
+		"shutdown"
 	];
 	this.listeners = {};
 	for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i++ ) {
@@ -90,6 +93,14 @@ YomboServer.TheServer.prototype.run = function() {
 
 	console.log( "YomboServer " + YomboServer.VERSION_STRING + " initing..." );
 
+	var scope = this;
+
+	// Termination signal
+	process.on( "SIGINT", function() {
+		console.log( "SIGINT Signal Received, shutting down..." );
+		scope.shutDown();
+	} );
+
 	// Load config
 	this.config = this.loadConfig();
 	if ( this.config === null ) {
@@ -97,8 +108,58 @@ YomboServer.TheServer.prototype.run = function() {
 		return;
 	}
 
+	// Serve internal yomboserver services
+	this.serveInternalServices();
+
+    // Setup connection with socket.io client
+    io.on( 'connection', function( socket ) {
+
+		scope.clientConnection( socket );
+
+	} );
+
+	// Start listening
+	var port = this.config.listenPort;
+	var scope = this;
+	http.listen( port, function() {
+
+		// Start YomboServer modules
+		scope.startModules();
+
+		scope.inited = true;
+
+		console.log( "YomboServer inited and listening on port " + port );
+
+	} );
+
+};
+
+YomboServer.TheServer.prototype.shutDown = function() {
+	
+	var scope = this;
+
+	// Send shutdown event to listeners
+	this.talkToListeners( "shutdown" );
+
+	this.stopModules( function() {
+
+		scope.http.stop();
+
+		process.exit();
+
+	} );
+
+};
+
+YomboServer.TheServer.prototype.serveInternalServices = function() {
+
+	if ( this.inited ) {
+		console.log( "YomboServer.serveInternalServices: Server already running." );
+		return;
+	}
+
 	// Serve root index.html
-    app.get( '/', function( req, res ) {
+    this.app.get( '/', function( req, res ) {
 
         res.sendFile( __dirname + '/public/index.html' );
 
@@ -136,42 +197,9 @@ YomboServer.TheServer.prototype.run = function() {
 		}
 		res.end( result );
     };
-	app.get( '/appRegService', appRegFunction );
-	app.post( '/appRegService', appRegFunction );
-
-    // Setup connection with client
-	var scope = this;
-    io.on( 'connection', function( socket ) {
-
-		scope.clientConnection( socket );
-
-	} );
-
-	// Start listening
-	var port = this.config.listenPort;
-	var scope = this;
-	http.listen( port, function() {
-
-		scope.startModules();
-
-		scope.inited = true;
-
-		console.log( "YomboServer inited and listening on port " + port );
-
-	} );
-
-};
-
-YomboServer.TheServer.prototype.shutDown = function() {
 	
-	var scope = this;
-	this.stopModules( function() {
-
-		scope.http.stop();
-
-		process.exit();
-
-	} );
+	this.app.get( '/appRegService', appRegFunction );
+	this.app.post( '/appRegService', appRegFunction );
 
 };
 
@@ -361,6 +389,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	module.yomboServer = this;
 	module.rooms = [];
 	module.clientEvents = [];
+	module.listenersObject = {};
 
 	this.modules.push( module );
 
@@ -368,7 +397,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 
 	module.start( function() {
 
-		scope.talkToListeners( "startModule", { module: module } );
+		scope.talkToListeners( "startModule", module );
 
 		if ( onStart ) {
 
@@ -413,12 +442,14 @@ YomboServer.TheServer.prototype.stopModule = function( module, onStop ) {
 		this.removeClientEvents( module, module.clients[ i ] );
 	}
 
+	this.unregisterListener( module );
+
 	module.clients = [];
 
 	var scope = this;
 	module.stop( function() {
 
-		scope.talkToListeners( "stopModule", { module: module } );
+		scope.talkToListeners( "stopModule", module );
 
 		if ( onStop ) {
 
@@ -544,7 +575,25 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 		console.error( "Error while loading config file in ./config.json" );
 	}
 
+	// Apply default values if they don't exist in the config
+	this.applyDefaultConfigValues( config );
+
 	return config;
+
+};
+
+YomboServer.TheServer.prototype.applyDefaultConfigValues = function( config ) {
+
+	if ( ! this.isNumeric( config.maxLogSize ) || ! Number.isInteger( config.maxLogSize ) || config.maxLogSize <= 0  ) {
+		console.log( "Config Warning: maxLogSize is not properly set. Setting default value." );
+		config.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
+	}
+
+};
+
+YomboServer.TheServer.prototype.isNumeric = function( n ) {
+
+	return ! isNaN( parseFloat( n ) ) && isFinite( n );
 
 };
 
@@ -572,7 +621,7 @@ YomboServer.TheServer.prototype.registerApplication = function( name, descriptio
 		} );
 	}
 
-	this.talkToListeners( "registerApplication", null );
+	this.talkToListeners( "registerApplication" );
 
 };
 
@@ -582,11 +631,52 @@ YomboServer.TheServer.prototype.unregisterApplication = function( url ) {
 		if ( this.applications[ i ].url === url ) {
 
 			this.applications.splice( i, 1 );
-			this.talkToListeners( "unregisterApplication", null );
+			this.talkToListeners( "unregisterApplication" );
 
 		}
 	}
 
+};
+
+// ***** Log service *****
+
+YomboServer.TheServer.prototype.logError = function( message, category, moduleName, instanceName ) {
+	this.log( message, "Error", category, moduleName, instanceName );
+};
+
+YomboServer.TheServer.prototype.logWarning = function( message, category, moduleName, instanceName ) {
+	this.log( message, "Warning", category, moduleName, instanceName );
+};
+
+YomboServer.TheServer.prototype.log = function( message, type, category, moduleName, instanceName ) {
+
+	var logEntry = {
+		message: message.toString(),
+		type: type,
+		category: category,
+		moduleName: moduleName,
+		instanceName: instanceName,
+		timestamp: new Date()
+	};
+
+	// Circular log max length control
+	if ( this.theLog.length >= this.config.maxLogSize ) {
+		this.theLog.shift();
+	}
+
+	this.theLog.push( logEntry );
+
+	this.talkToListeners( "log", logEntry );
+
+	// Output to server console
+	if ( type in this.config.logConsoleTypes ) {
+		var logConsoleFields = this.config.logConsoleFields;
+		var logText = "";
+		for ( var i = 0; i < logConsoleFields.length; i++ ) {
+			logText += logEntry[ logConsoleFields[ i ] ];
+		}
+		console.log( logText );
+	}
 };
 
 // ***** Rooms service *****
@@ -799,7 +889,7 @@ YomboServer.TheServer.prototype.gethostURL = function( path ) {
 
 // ***** Module Administration Services *****
 
-YomboServer.TheServer.prototype.registerListener = function( functionName, listener ) {
+YomboServer.TheServer.prototype.registerListener = function( module, functionName, listenerFunction ) {
 
 	var listeners = this.listeners[ functionName ];
 	
@@ -810,32 +900,38 @@ YomboServer.TheServer.prototype.registerListener = function( functionName, liste
 
 	}
 
-	listeners.push( listener );
+	module.listenersObject[ functionName ] = listenerFunction;
+
+	listeners.push( module );
 
 };
 
-YomboServer.TheServer.prototype.unregisterListener = function( listener ) {
+YomboServer.TheServer.prototype.unregisterListener = function( module ) {
+
+	var found = false;
 
 	for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i++ ) {
 
 		var listeners = this.listeners[ this.listenerFunctionNames[ i ] ];
 
-		var index = listeners.indexOf( listener );
+		var index = listeners.indexOf( module );
 
 		if ( index >= 0 ) {
 
+			found = true;
+
 			listeners.splice( index, 1 );
-			return;
 
 		}
 
 	}
 
-	if ( ! listeners ) {
-
+	if ( ! found ) {
 		console.log( "Unregister listener: Couldn't locate listener." );
-
+		return;
 	}
+
+	module.listenersObject = {};
 
 };
 
@@ -851,7 +947,7 @@ YomboServer.TheServer.prototype.talkToListeners = function( functionName, params
 
 	for ( var i = 0, il = listeners.length; i < il; i++ ) {
 
-		listeners[ i ]( params );
+		listeners[ i ].listenersObject[ functionName ]( params );
 
 	}
 	
@@ -879,7 +975,7 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 	this.clients.push( client );
 
-	this.talkToListeners( "clientConnected", { client: client } );
+	this.talkToListeners( "clientConnected", client );
 
 	var scope = this;
 
@@ -911,7 +1007,7 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 		}
 
-		scope.talkToListeners( "clientDisconnected", { client: client } );
+		scope.talkToListeners( "clientDisconnected", client );
 
 	} );
 

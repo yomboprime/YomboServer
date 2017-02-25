@@ -739,11 +739,11 @@ sharedboard.prototype.init = function( firstCanvas, presentationCanvas, socket, 
 		alert( "The connection with the server was closed." );
 		scope.connectedToModule = false;
 	} );
-
+/*
 	socket.on( "disconnect", function( msg ) {
 		alert( "The connection with the server was closed." );
 	} );
-
+*/
 	scope.connectedToModule = true;
 
 	socket.emit( "ysConnectToModule", { moduleName: "sharedboard", instanceName: instanceName } );

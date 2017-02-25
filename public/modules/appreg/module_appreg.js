@@ -40,13 +40,13 @@ appreg.appreg.prototype.start = function( onStart ) {
 
 	var scope = this;
 
-	var appFunction = function( params ) {
+	var appFunction = function() {
 
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAppReg", scope.getApplicationsMessage() );
 
 	};
-	this.yomboServer.registerListener( "registerApplication", appFunction );
-	this.yomboServer.registerListener( "unregisterApplication", appFunction );
+	this.yomboServer.registerListener( this, "registerApplication", appFunction );
+	this.yomboServer.registerListener( this, "unregisterApplication", appFunction );
 
 	console.log( "Application Registry module started." );
 

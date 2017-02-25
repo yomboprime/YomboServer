@@ -44,8 +44,7 @@ admin.admin.prototype.start = function( onStart ) {
 	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-dark.min.css" );
 
 	var scope = this;
-	this.yomboServer.registerListener( "startModule", function( params ) {
-		var module = params.module;
+	this.yomboServer.registerListener( this, "startModule", function( module ) {
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminModuleStarted", {
 			name: module.name,
 			instanceName: module.instanceName,
@@ -54,8 +53,7 @@ admin.admin.prototype.start = function( onStart ) {
 
 	} );
 
-	this.yomboServer.registerListener( "stopModule", function( params ) {
-		var module = params.module;
+	this.yomboServer.registerListener( this, "stopModule", function( module ) {
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminModuleStopped", {
 			name: module.name,
 			instanceName: module.instanceName
@@ -63,19 +61,19 @@ admin.admin.prototype.start = function( onStart ) {
 
 	} );
 
-	this.yomboServer.registerListener( "clientConnected", function( params ) {
+	this.yomboServer.registerListener( this, "clientConnected", function( client ) {
 
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientConnected", { totalNumberOfClients: scope.yomboServer.clients.length } );
 
 	} );
 
-	this.yomboServer.registerListener( "clientDisconnected", function( client ) {
+	this.yomboServer.registerListener( this, "clientDisconnected", function( client ) {
 
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientDisconnected", { totalNumberOfClients: scope.yomboServer.clients.length } );
 
 	} );
 
-	this.yomboServer.registerListener( "clientConnectedToModule", function( params ) {
+	this.yomboServer.registerListener( this, "clientConnectedToModule", function( params ) {
 
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientConnectedToModule", {
 			instanceName: params.module.instanceName,
@@ -84,7 +82,7 @@ admin.admin.prototype.start = function( onStart ) {
 
 	} );
 
-	this.yomboServer.registerListener( "clientDisconnectedFromModule", function( params ) {
+	this.yomboServer.registerListener( this, "clientDisconnectedFromModule", function( params ) {
 
 		scope.yomboServer.emitToClientsArray( scope.clients, "ysAdminClientDisconnectedFromModule", {
 			instanceName: params.module.instanceName,
