@@ -48,8 +48,6 @@ appreg.appreg.prototype.start = function( onStart ) {
 	this.yomboServer.registerListener( this, "registerApplication", appFunction );
 	this.yomboServer.registerListener( this, "unregisterApplication", appFunction );
 
-	console.log( "Application Registry module started." );
-
 	if ( onStart ) {
 
 		onStart();
@@ -59,8 +57,6 @@ appreg.appreg.prototype.start = function( onStart ) {
 };
 
 appreg.appreg.prototype.stop = function( onStop ) {
-
-	console.log( "Application Registry module stopped." );
 
 	if ( onStop ) {
 
@@ -72,15 +68,13 @@ appreg.appreg.prototype.stop = function( onStop ) {
 
 appreg.appreg.prototype.clientConnection = function( client ) {
 
-	console.log( "Application Registry module: Client connected." );
-
 	client.socket.emit( "ysAppReg", this.getApplicationsMessage() );
 
 };
 
 appreg.appreg.prototype.clientDisconnection = function( client ) {
 
-	console.log( "Application Registry module: Client disconnected." );
+	// Nothing to do here yet
 
 };
 

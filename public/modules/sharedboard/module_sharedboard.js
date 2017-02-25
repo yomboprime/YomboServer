@@ -51,8 +51,6 @@ sharedboard.sharedboard.prototype.start = function( onStart ) {
 
 	this.yomboServer.registerApplication( "SharedBoard", "A shared board for drawing", this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboardLoader.html" ) );
 
-	console.log( "sharedboard module started" );
-
 	if ( onStart ) {
 
 		onStart();
@@ -65,8 +63,6 @@ sharedboard.sharedboard.prototype.stop = function( onStop ) {
 
 	this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboard.html" ) );
 
-	console.log( "sharedboard module stopped." );
-
 	if ( onStop ) {
 
 		onStop();
@@ -76,8 +72,6 @@ sharedboard.sharedboard.prototype.stop = function( onStop ) {
 };
 
 sharedboard.sharedboard.prototype.clientConnection = function( client ) {
-
-	console.log( "sharedboard: Client connected." );
 
 	// Get the room name from client url parameter
 	var params = this.yomboServer.getClientParameters( client );
@@ -118,15 +112,11 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 	client.socket.on( "yssbGetLatestData", function( msg ) {
 
-		//console.log( "Some client sent yssbGetLatestData message. *****" );
-
 		client.socket.emit( "yssbPaintCommand", room.sharedboard.latestPaintCommands );
 
 	} );
 
 	client.socket.on( "yssbPaintCommand", function( msg ) {
-
-		//console.log( "Some client sent paint command." );
 
 		scope.yomboServer.emitToRoom( room, "yssbPaintCommand", msg );
 
@@ -135,7 +125,7 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 			var cmd = msg[ i ];
 
 			if ( cmd === null ) {
-				console.log( "Error: null command." );
+				scope.yomboServer.logError( "Received null paint command.", "sharedboard.clientConnection", scope.name, scope.instanceName );
 				continue;
 			}
 
@@ -161,8 +151,6 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 };
 
 sharedboard.sharedboard.prototype.clientDisconnection = function( client ) {
-
-	console.log( "sharedboard: Client disconnected." );
 
 	var room = client.sharedboard.room;
 

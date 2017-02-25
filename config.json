@@ -4,7 +4,7 @@
 
     "listenPort": 12345,
 
-    "logConsoleTypes": [ "Info", "Error", "Warning" ],
+    "logConsoleTypes": [ "System", "Error", "Warning" ],
 
     "logConsoleFields": [ "timestamp", "type", "category", "instanceName", "moduleName", "message" ],
 

@@ -43,6 +43,8 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 	easyrtc.setOption( "logLevel", "debug" );
 
+	var scopeModule = this;
+
 	// Overriding the default easyrtcAuth listener, only so we can directly access its callback
 	easyrtc.events.on( "easyrtcAuth", function( socket, easyrtcid, msg, socketCallback, callback ) {
 
@@ -57,7 +59,7 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 			connectionObj.setField( "credential", msg.msgData.credential, { "isShared": false } );
 
-			console.log( "[" + easyrtcid + "] Credential saved!", connectionObj.getFieldValueSync( "credential" ) );
+			scopeModule.logInfo( "[" + easyrtcid + "] Credential saved! " + connectionObj.getFieldValueSync( "credential" ), "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
 
 			callback(err, connectionObj);
 		} );
@@ -65,8 +67,11 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 	// To test, lets print the credential to the console for every room join!
 	easyrtc.events.on( "roomJoin", function( connectionObj, roomName, roomParameter, callback ) {
-		console.log( "[" + connectionObj.getEasyrtcid() + "] Credential retrieved!", connectionObj.getFieldValueSync( "credential" ) );
+
+		scopeModule.logInfo( "[" + connectionObj.getEasyrtcid() + "] Credential retrieved! " + connectionObj.getFieldValueSync( "credential" ), "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
+
 		easyrtc.events.defaultListeners.roomJoin( connectionObj, roomName, roomParameter, callback );
+
 	} );
 
 	// Start EasyRTC server
@@ -87,13 +92,11 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 		rtcRef.events.on( "roomCreate", function( appObj, creatorConnectionObj, roomName, roomOptions, callback ) {
 
-			console.log( "roomCreate fired! Trying to create: " + roomName );
+			scopeModule.logInfo( "roomCreate fired! Trying to create: " + roomName, "rtcsignal.start", scopeModule.name, scopeModule.instanceName );
 
 			appObj.events.defaultListeners.roomCreate( appObj, creatorConnectionObj, roomName, roomOptions, callback );
 
 		} );
-
-		console.log( "WebRTC signal server module started." );
 
 		if ( onStart ) {
 
@@ -106,8 +109,6 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 rtcsignal.rtcsignal.prototype.stop = function( onStop ) {
 
-	console.log( "WebRTC signal server module stopped." );
-
 	if ( onStop ) {
 
 		onStop();
@@ -118,22 +119,13 @@ rtcsignal.rtcsignal.prototype.stop = function( onStop ) {
 
 rtcsignal.rtcsignal.prototype.clientConnection = function( client ) {
 
-	console.log( "webrtc module: Client connected." );
-
-/*
-	client.socket.emit( "adminAllData", msg );
-
-	var scope = this;
-	client.socket.on( "specificMessage", function( msg ) {
-
-	} );
-*/
+	// Nothing to do here yet
 
 };
 
 rtcsignal.rtcsignal.prototype.clientDisconnection = function( client ) {
 
-	console.log( "webrtc module: Client disconnected." );
+	// Nothing to do here yet
 
 };
 

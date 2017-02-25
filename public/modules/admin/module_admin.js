@@ -95,8 +95,6 @@ admin.admin.prototype.start = function( onStart ) {
 
 	this.yomboServer.registerApplication( "Admin", "Admin page", this.yomboServer.gethostURL( "public/modules/admin/admin.html" ) );
 
-	console.log( "Administration module started." );
-
 	if ( onStart ) {
 
 		onStart();
@@ -106,8 +104,6 @@ admin.admin.prototype.start = function( onStart ) {
 };
 
 admin.admin.prototype.stop = function( onStop ) {
-
-	console.log( "Administration module stopped." );
 
 	if ( onStop ) {
 
@@ -119,8 +115,6 @@ admin.admin.prototype.stop = function( onStop ) {
 
 admin.admin.prototype.clientConnection = function( client ) {
 
-	console.log( "Admin module: Client connected." );
-	
 	var msg = {
 		modules: [],
 		launchConfigurations: [],
@@ -188,6 +182,6 @@ admin.admin.prototype.clientConnection = function( client ) {
 
 admin.admin.prototype.clientDisconnection = function( client ) {
 
-	console.log( "Admin module: Client disconnected." );
+	// Nothing to do here yet
 
 };

@@ -40,14 +40,13 @@ camcap.camcap.prototype = {
 
 camcap.camcap.prototype.start = function( onStart ) {
 
-	console.log( "camcap module starting on " + this.config.device );
-
 	this.yomboServer.mapFile( '/public/modules/camcap/camcap.html' );
 	this.yomboServer.mapFile( '/public/modules/camcap/main_camcap.js' );
 
 	this.yomboServer.mapFile( '/public/modules/camcap/camcap2.html' );
 	this.yomboServer.mapFile( '/public/modules/camcap/main_camcap2.js' );
 
+	this.yomboServer.logInfo( "Starting camera capture. Device: " + this.config.device, "camcap.start", this.name, this.instanceName );
 
 	this.camcapChildProcess = fork( "public/modules/camcap/camcapChildProc", [ JSON.stringify( this.config ) ] );
 
@@ -55,13 +54,12 @@ camcap.camcap.prototype.start = function( onStart ) {
 	this.camcapChildProcess.on( "message", function( message ) {
 
 		// Worker response
-		//console.log( "Child process said something: " + message.what );
 
 		var what = message.what;
 		if ( what === "frame" ) {
 
 			if ( message.error ) {
-				console.log( "Worker reported error in frame message: " + message.error );
+				scopeModule.yomboServer.logError( "Worker reported error in frame message: " + message.error, "camcap.start", scopeModule.name, scopeModule.instanceName );
 			}
 
 			scopeModule.lastFrame = message;
@@ -72,13 +70,13 @@ camcap.camcap.prototype.start = function( onStart ) {
 		else if ( what === "error" ) {
 
 			scopeModule.yomboServer.stopModule( scopeModule, function() {
-				console.log( "camcap module terminated due to subprocess error: " + message.error );
+				scopeModule.yomboServer.logError( "camcap terminated due to subprocess error: " + message.error, "camcap.start", scopeModule.name, scopeModule.instanceName );
 			} );
 
 		}
 		else if ( what === "debug" ) {
 
-			console.log( "Child process debug: " + message.debug );
+			scopeModule.yomboServer.logInfo( "Child process debug: " + message.debug, "camcap.start", scopeModule.name, scopeModule.instanceName );
 			
 		}
 
@@ -90,8 +88,6 @@ camcap.camcap.prototype.start = function( onStart ) {
 
 		if ( scopeModule.onTermination ) {
 
-			console.log( "camcap module stopped. instanceName=" + scopeModule.instanceName );
-
 			scopeModule.onTermination();
 
 		}
@@ -99,7 +95,7 @@ camcap.camcap.prototype.start = function( onStart ) {
 
 			scopeModule.yomboServer.stopModule( scopeModule, function() {
 
-				console.log( "camcap module stopped abnormally. instanceName=" + scopeModule.instanceName );
+				scopeModule.yomboServer.logError( "camcap module stopped abnormally", "camcap.start", scopeModule.name, scopeModule.instanceName );
 
 			} );
 
@@ -108,16 +104,6 @@ camcap.camcap.prototype.start = function( onStart ) {
 	} );
 
 	this.camcapChildProcess.send( { what: "start" } );
-
-/*
-	setTimeout( function() {
-
-		scopeModule.camcapWorker.postMessage( "requestFrame" );
-
-	}, this.config.captureIntervalMs );
-	*/
-
-	console.log( "camcap module started on " + this.config.device );
 
 	if ( onStart ) {
 
@@ -143,18 +129,12 @@ camcap.camcap.prototype.stop = function( onStop ) {
 
 camcap.camcap.prototype.clientConnection = function( client ) {
 
-	console.log( "camcap: Client connected." );
-
-	client.socket.on( "someMessage", function( msg ) {
-
-		console.log( "camcap:Some client sent someMessage. *****" );
-
-	} );
+	// Nothing to do here yet
 
 };
 
 camcap.camcap.prototype.clientDisconnection = function( client ) {
 
-	console.log( "camcap: Client disconnected." );
+	// Nothing to do here yet
 
 };
