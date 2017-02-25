@@ -17,6 +17,9 @@ var btnStartModule;
 var btnGetAllLog;
 var btnClearLog;
 
+var checkLogUpdate;
+var checkScrollLock;
+
 init();
 
 function init() {
@@ -85,7 +88,9 @@ function init() {
 	
 	socket.on( "ysAdminLog", function( logEntry ) {
 
-		createLogUI( logEntry );
+		if ( checkLogUpdate.checked ) {
+			createLogUI( logEntry );
+		}
 
 	} );
 
@@ -129,6 +134,10 @@ function initUI() {
 	btnStartModule = document.getElementById( "buttonStartLaunchConfigurationModule" );
 	btnGetAllLog = document.getElementById( "buttongetAllLog" );
 	btnClearLog = document.getElementById( "buttonClearLog" );
+
+	checkLogUpdate = document.getElementById( "checkLogUpdate" );
+	checkLogUpdate.checked = true;
+	checkScrollLock = document.getElementById( "checkScrollLock" );
 
 	window.addEventListener( "resize", onWindowResize, false );
 
@@ -298,7 +307,9 @@ function createLogUI( logEntry ) {
 	w2ui.logDiv.records.push( logEntry );
 	w2ui.logDiv.refresh();
 
-	w2ui.logDiv.scrollIntoView( w2ui.logDiv.records.length - 1 );
+	if ( ! checkScrollLock.checked ) {
+		w2ui.logDiv.scrollIntoView( w2ui.logDiv.records.length - 1 );
+	}
 
 }
 
