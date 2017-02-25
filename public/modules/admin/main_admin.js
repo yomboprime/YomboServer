@@ -74,9 +74,13 @@ function init() {
 	
 	socket.on( "ysAdminLog", function( logEntry ) {
 
-		//console.log( "LOG: " + logEntry.message );
-
 		createLogUI( logEntry );
+
+	} );
+
+	socket.on( "ysAdminAllTheLog", function( logEntries ) {
+
+		createLogUIAll( logEntries );
 
 	} );
 
@@ -196,6 +200,13 @@ function initUI() {
 
 	} );
 
+	var btngetAllLog = document.getElementById( "buttongetAllLog" );
+	btngetAllLog.onclick = function() {
+
+		getAllTheLog();
+
+	};
+
 	var btnClearLog = document.getElementById( "buttonClearLog" );
 	btnClearLog.onclick = function() {
 
@@ -260,6 +271,23 @@ function createLogUI( logEntry ) {
 
 }
 
+function createLogUIAll( logEntries ) {
+
+	w2ui.logDiv.records = [];
+
+	var n = logEntries.length;
+	for ( var i = 0; i < n; i++ ) {
+		var logEntry = logEntries[ i ];
+		logEntry.recid = logRecId++;
+		w2ui.logDiv.records.push( logEntry );
+
+	}
+
+	w2ui.logDiv.total = w2ui.logDiv.records.length;
+	w2ui.logDiv.refresh();
+
+}
+
 function setClientCountModule( instanceName, value ) {
 
 	var records = w2ui.modulesDiv.records;
@@ -287,5 +315,11 @@ function stopModule( instanceName ) {
 	socket.emit( "ysAdminStopModule", {
 		instanceName: instanceName
 	} );
+
+}
+
+function getAllTheLog() {
+
+	socket.emit( "ysAdminGetAllTheLog", {} );
 
 }

@@ -8,6 +8,19 @@
 	<style>
 	    body {
 		background-color: black;
+		height: 100%;
+	    }
+	    .flexcontainer {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		height: 100%;
+	    }
+	    .flexcontent {
+		flex: 1 1 200px;
+	    }
+	    .flexremaining {
+		flex: 1 1 200px;
 	    }
         </style>
 
@@ -24,16 +37,25 @@
     
     <body>
 
-	<div id="modulesDiv" style="width: 100%; height: 200px;"></div>
-	<button id="buttonStopModule">Shutdown module</button>
+	<div class="flexcontainer">
 
-	<div id="launchConfigurationsDiv" style="width: 100%; height: 200px;"></div>
-	<button id="buttonStartLaunchConfigurationModule">Start module</button>
+	    <div class="flexcontent" id="modulesDiv"></div>
+	    <button class="flexbutton" id="buttonStopModule">Shutdown module</button>
 
-	<div id="logDiv" style="width: 100%; height: 200px;"></div>
-	<button id="buttonClearLog">Clear log</button>
+	    <div class="flexcontent" id="launchConfigurationsDiv"></div>
+	    
+	    <button id="buttonStartLaunchConfigurationModule">Start module</button>
+	    
 
-        <script src="/public/modules/admin/main_admin.js"></script>
-        
+	    <div class="flexremaining" id="logDiv"></div>
+	    
+	    <button id="buttongetAllLog">Get all the log (slow)</button>
+	    <button id="buttonClearLog">Clear log</button>
+	    
+
+	</div>
+
+	<script src="/public/modules/admin/main_admin.js"></script>
+
     </body>
 </html>

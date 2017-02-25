@@ -29,11 +29,13 @@ Module --> Client:
  - `"ysAdminClientConnectedToModule"`
  - `"ysAdminClientDisconnectedFromModule"`
  - `"ysAdminLog"`
+ - `"ysAdminAllTheLog"`
 
 Client --> module
 
  - `"ysAdminStartModule"`
  - `"ysAdminStopModule"`
+ - `"ysAdminGetAllTheLog"`
 
 
 ### camcap Module
