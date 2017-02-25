@@ -9,29 +9,24 @@
 	    body {
 		background-color: white;
 		height: 100%;
+		margin: 0px;
 	    }
-	    .flexcontainer {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		height: 100%;
+	    .panel {
+		height: 200px;
+		margin: 10px;
 	    }
-	    .flexcontent {
-		flex: 1 1 200px;
+	    .logPanel {
+		margin: 10px;
 	    }
-	    .flexremaining {
-		flex: 1 1 200px;
+	    .button {
+		margin-left: 10px;
+		margin-right: 10px;
 	    }
         </style>
 
-
-	<!--<link rel="stylesheet" type="text/css" href="/public/lib/w2ui/w2ui-dark.min.css" />-->
 	<link rel="stylesheet" type="text/css" href="/public/lib/w2ui/w2ui-1.5.rc1.min.css" />
-
 	<script src="/public/lib/w2ui/jquery-2.1.4.min.js"></script>
-
 	<script src="/public/lib/w2ui/w2ui-1.5.rc1.js"></script>
-	<!--<script src="/public/js/lib/w2ui/w2ui-1.4.3.min.js"></script>-->
 
 	<script src="/socket.io/socket.io.js"></script>
 
@@ -39,24 +34,16 @@
     
     <body>
 
-	<div class="flexcontainer">
+	<div class="panel" id="modulesDiv"></div>
+	<button class="button" id="buttonStopModule">Shutdown module</button>
 
-	    <div class="flexcontent" id="modulesDiv"></div>
-	    <button class="flexbutton" id="buttonStopModule">Shutdown module</button>
+	<div class="panel" id="launchConfigurationsDiv"></div>
+	<button class="button" id="buttonStartLaunchConfigurationModule">Start module</button>
 
-	    <div class="flexcontent" id="launchConfigurationsDiv"></div>
+	<div class="logPanel" id="logDiv"></div>
+	<button class="button" id="buttongetAllLog">Get all the log (slow)</button>
+	<button class="button" id="buttonClearLog">Clear log</button>
 	    
-	    <button id="buttonStartLaunchConfigurationModule">Start module</button>
-	    
-
-	    <div class="flexremaining" id="logDiv"></div>
-	    
-	    <button id="buttongetAllLog">Get all the log (slow)</button>
-	    <button id="buttonClearLog">Clear log</button>
-	    
-
-	</div>
-
 	<script src="/public/modules/admin/main_admin.js"></script>
 
     </body>

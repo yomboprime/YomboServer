@@ -8,6 +8,10 @@ var totalNumberOfClients = 0;
 
 var socket;
 
+var modulesDiv;
+var launchConfigurationsDiv;
+var divLog;
+
 var btnStopModule;
 var btnStartModule;
 var btnGetAllLog;
@@ -97,7 +101,34 @@ function init() {
 
 }
 
+function onWindowResize() {
+
+	var windowHeight = window.innerHeight;
+
+	var logHeight = windowHeight -
+			modulesDiv.offsetHeight -
+			launchConfigurationsDiv.offsetHeight -
+			btnStopModule.offsetHeight -
+			btnStartModule.offsetHeight -
+			btnGetAllLog.offsetHeight -
+			6 * 10;
+
+	logDiv.style.height = logHeight + "px";
+
+}
+
 function initUI() {
+
+	modulesDiv = document.getElementById( "modulesDiv" );
+	launchConfigurationsDiv = document.getElementById( "launchConfigurationsDiv" );
+	logDiv = document.getElementById( "logDiv" );
+
+	btnStopModule = document.getElementById( "buttonStopModule" );
+	btnStartModule = document.getElementById( "buttonStartLaunchConfigurationModule" );
+	btnGetAllLog = document.getElementById( "buttongetAllLog" );
+	btnClearLog = document.getElementById( "buttonClearLog" );
+
+	window.addEventListener( "resize", onWindowResize, false );
 
 	// Active modules array
 
@@ -123,7 +154,6 @@ function initUI() {
 
 	} );
 
-	btnStopModule = document.getElementById( "buttonStopModule" );
 	btnStopModule.onclick = function() {
 
 		var selectionRecId = w2ui.modulesDiv.getSelection()[ 0 ];
@@ -162,7 +192,6 @@ function initUI() {
 
 	} );
 
-	btnStartModule = document.getElementById( "buttonStartLaunchConfigurationModule" );
 	btnStartModule.onclick = function() {
 
 		var selectionRecId = w2ui.launchConfigurationsDiv.getSelection()[ 0 ];
@@ -205,14 +234,12 @@ function initUI() {
 
 	} );
 
-	btnGetAllLog = document.getElementById( "buttongetAllLog" );
 	btnGetAllLog.onclick = function() {
 
 		getAllTheLog();
 
 	};
 
-	btnClearLog = document.getElementById( "buttonClearLog" );
 	btnClearLog.onclick = function() {
 
 		w2ui.logDiv.records = [];
@@ -220,6 +247,9 @@ function initUI() {
 		w2ui.logDiv.refresh();
 
 	};
+
+	// First resize
+	onWindowResize();
 
 }
 
@@ -274,6 +304,8 @@ function createLogUI( logEntry ) {
 	w2ui.logDiv.total = w2ui.logDiv.records.length;
 	w2ui.logDiv.refresh();
 
+	w2ui.logDiv.scrollIntoView( w2ui.logDiv.records.length - 1 );
+
 }
 
 function createLogUIAll( logEntries ) {
@@ -290,6 +322,8 @@ function createLogUIAll( logEntries ) {
 
 	w2ui.logDiv.total = w2ui.logDiv.records.length;
 	w2ui.logDiv.refresh();
+
+	w2ui.logDiv.scrollIntoView( w2ui.logDiv.records.length - 1 );
 
 }
 
