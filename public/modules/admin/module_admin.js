@@ -36,12 +36,7 @@ admin.admin.prototype.start = function( onStart ) {
 
 	this.yomboServer.mapFile( "/public/modules/admin/admin.html" );
 	this.yomboServer.mapFile( "/public/modules/admin/main_admin.js" );
-	this.yomboServer.mapFile( "/public/lib/w2ui/jquery-2.1.4.min.js" );
-	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-1.4.3.css" );
-	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-1.4.3.min.css" );
-	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-1.4.3.js" );
-	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-1.4.3.min.js" );
-	this.yomboServer.mapFile( "/public/lib/w2ui/w2ui-dark.min.css" );
+	this.yomboServer.mapDirectory( "/public/lib/w2ui" );
 
 	var scope = this;
 	this.yomboServer.registerListener( this, "startModule", function( module ) {

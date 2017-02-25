@@ -8,6 +8,11 @@ var totalNumberOfClients = 0;
 
 var socket;
 
+var btnStopModule;
+var btnStartModule;
+var btnGetAllLog;
+var btnClearLog;
+
 init();
 
 function init() {
@@ -118,7 +123,7 @@ function initUI() {
 
 	} );
 
-	var btnStopModule = document.getElementById( "buttonStopModule" );
+	btnStopModule = document.getElementById( "buttonStopModule" );
 	btnStopModule.onclick = function() {
 
 		var selectionRecId = w2ui.modulesDiv.getSelection()[ 0 ];
@@ -157,7 +162,7 @@ function initUI() {
 
 	} );
 
-	var btnStartModule = document.getElementById( "buttonStartLaunchConfigurationModule" );
+	btnStartModule = document.getElementById( "buttonStartLaunchConfigurationModule" );
 	btnStartModule.onclick = function() {
 
 		var selectionRecId = w2ui.launchConfigurationsDiv.getSelection()[ 0 ];
@@ -200,14 +205,14 @@ function initUI() {
 
 	} );
 
-	var btngetAllLog = document.getElementById( "buttongetAllLog" );
-	btngetAllLog.onclick = function() {
+	btnGetAllLog = document.getElementById( "buttongetAllLog" );
+	btnGetAllLog.onclick = function() {
 
 		getAllTheLog();
 
 	};
 
-	var btnClearLog = document.getElementById( "buttonClearLog" );
+	btnClearLog = document.getElementById( "buttonClearLog" );
 	btnClearLog.onclick = function() {
 
 		w2ui.logDiv.records = [];
