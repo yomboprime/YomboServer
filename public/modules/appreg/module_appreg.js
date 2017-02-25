@@ -70,6 +70,8 @@ appreg.appreg.prototype.clientConnection = function( client ) {
 
 	client.socket.emit( "ysAppReg", this.getApplicationsMessage() );
 
+	return true;
+
 };
 
 appreg.appreg.prototype.clientDisconnection = function( client ) {

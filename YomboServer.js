@@ -871,6 +871,12 @@ YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, mess
 
 };
 
+YomboServer.TheServer.prototype.removeClient = function( client ) {
+
+	client.socket.disconnect();
+
+};
+
 YomboServer.TheServer.prototype.getClientParameters = function( client ) {
 	return this.getURLParameters( this.getClientReferer( client ) );
 }
@@ -1057,20 +1063,22 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
 			if ( index < 0 ) {
 
-				client.connectedModules.push( module );
+				if ( module.clientConnection( client ) ) {
 
-				if ( module.clients.indexOf( client ) < 0 ) {
+					client.connectedModules.push( module );
 
-					module.clients.push( client );
+					if ( module.clients.indexOf( client ) < 0 ) {
+
+						module.clients.push( client );
+
+					}
+
+					scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
+
+					socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
 
 				}
-
-				module.clientConnection( client );
-
-				scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
-
-				socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
-
+				
 			}
 
 		}

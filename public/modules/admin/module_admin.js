@@ -116,6 +116,12 @@ admin.admin.prototype.stop = function( onStop ) {
 
 admin.admin.prototype.clientConnection = function( client ) {
 
+	if ( ! client.isGod ) {
+
+		return false;
+
+	}
+
 	var msg = {
 		modules: [],
 		launchConfigurations: [],
@@ -189,6 +195,8 @@ admin.admin.prototype.clientConnection = function( client ) {
 
 
 	client.socket.emit( "ysAdminAllData", msg );
+
+	return true;
 
 };
 

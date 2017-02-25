@@ -119,7 +119,7 @@ rtcsignal.rtcsignal.prototype.stop = function( onStop ) {
 
 rtcsignal.rtcsignal.prototype.clientConnection = function( client ) {
 
-	// Nothing to do here yet
+	return true;
 
 };
 

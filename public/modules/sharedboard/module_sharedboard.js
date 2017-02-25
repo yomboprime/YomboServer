@@ -148,6 +148,8 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
 	client.socket.emit( "yssbPaintCommand", room.sharedboard.latestPaintCommands );
 
+	return true;
+
 };
 
 sharedboard.sharedboard.prototype.clientDisconnection = function( client ) {

@@ -129,7 +129,7 @@ camcap.camcap.prototype.stop = function( onStop ) {
 
 camcap.camcap.prototype.clientConnection = function( client ) {
 
-	// Nothing to do here yet
+	return true;
 
 };
 
