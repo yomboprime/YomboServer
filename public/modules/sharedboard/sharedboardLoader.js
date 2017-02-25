@@ -67,6 +67,8 @@ function init() {
 		}
     } ) );
 
+	dialog.setInitialFocus( roomNameTextField );
+
 	//window.addEventListener( "resize", onWindowResize, false );
 
 	// First resize
