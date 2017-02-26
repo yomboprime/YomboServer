@@ -138,16 +138,22 @@ YomboServer.TheServer.prototype.run = function() {
 
 YomboServer.TheServer.prototype.shutDown = function() {
 	
-	var scope = this;
+	this.logSystem( "YomboServer is shutting down" );
 
 	// Send shutdown event to listeners
 	this.talkToListeners( "shutdown" );
 
+	var scope = this;
+
 	this.stopModules( function() {
 
-		scope.http.stop();
+		setImmediate( function() {
 
-		process.exit();
+			scope.logSystem( "YomboServer closed. Have a nice day! :-)" );
+
+			process.exit( 0 );
+
+		} );
 
 	} );
 
@@ -263,7 +269,7 @@ YomboServer.TheServer.prototype.startModules = function( onStart ) {
 
 		if ( launchConfig.enabled ) {
 
-			this.startModule( launchConfig.name, launchConfig.instanceName, launchConfig.config, onStartInternal );
+			this.startModule( launchConfig.name, launchConfig.instanceName, launchConfig.config, onStartInternal, true );
 
 		}
 
@@ -289,22 +295,28 @@ YomboServer.TheServer.prototype.stopModules = function( onStop ) {
 	else {
 
 		var onStopInternal = null;
-
 		if ( onStop ) {
-
-			onStopInternal = createFunctionWaitNCalls( numModules, onStop );
-
+			onStopInternal = this.createFunctionWaitNCalls( numModules, onStop );
 		};
 
+		var j = 0;
 		for ( var i = 0; i < numModules; i++ ) {
 
-			var module = this.modules[ i ];
+			var module = this.modules[ j ];
 
-			this.stopModule( module, onStopInternal );
+			if ( module.moduleDefinition.canStop ) {
+				this.stopModule( module, onStopInternal );
+			}
+			else {
 
+				j++;
+
+				if ( onStopInternal ) {
+					onStopInternal();
+				}
+			}
 		}
 	}
-
 };
 
 YomboServer.TheServer.prototype.restart = function( onRestart ) {
@@ -313,22 +325,22 @@ YomboServer.TheServer.prototype.restart = function( onRestart ) {
 
 	var scope = this;
 	this.stopModules( function() {
+		setImmediate( function() {
+			scope.startModules( function() {
 
-		scope.startModules( function() {
+				if ( onRestart ) {
 
-			if ( onRestart ) {
+					onRestart();
 
-				onRestart();
+				}
 
-			}
-			
+			} );
 		} );
-
 	} );
 
 };
 
-YomboServer.TheServer.prototype.startModule = function( name, instanceName, config, onStart ) {
+YomboServer.TheServer.prototype.startModule = function( name, instanceName, config, onStart, ignoreUniqueInstanceError ) {
 
 	// Starts instance of module
 	// Returns error message or null if success.
@@ -346,7 +358,11 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	if ( moduleDefinition.uniqueInstance && this.searchByValue( this.modules, "name", name ) ) {
 
 		var msg = "Tried to create a module with uniqueInstance=true and a module with same name already exists. Ignoring module.";
-		this.logError( msg, "YomboServer.startModule", name, instanceName );
+
+		if ( ! ignoreUniqueInstanceError ) {
+			this.logError( msg, "YomboServer.startModule", name, instanceName );
+		}
+
 		return msg;
 
 	}
@@ -400,6 +416,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	module.name = name;
 	module.instanceName = this.getInstanceName( module, instanceName );
 	module.config = config;
+	module.moduleDefinition = moduleDefinition;
 	module.clients = [];
 	module.yomboServer = this;
 	module.rooms = [];
@@ -428,7 +445,7 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	
 };
 
-YomboServer.TheServer.prototype.stopModule = function( module, onStop ) {
+YomboServer.TheServer.prototype.stopModule = function( module, onStop, ignoreUniqueInstanceError ) {
 
 	// Stops instance of module
 	// Returns error message or null if success.
@@ -443,12 +460,17 @@ YomboServer.TheServer.prototype.stopModule = function( module, onStop ) {
 
 	this.logSystem( "Stopping module", "YomboServer.stopModule", module.name, module.instanceName );
 
-	var moduleDefinition = this.searchByValue( this.config.moduleDefinitions, "name", module.name );
-
-	if ( ! moduleDefinition.canStop ) {
+	if ( ! module.moduleDefinition.canStop ) {
 
 		var msg = "Tried to stop a module with canStop=false. Ignoring attempt.";
-		this.logError( msg, "YomboServer.stopModule", module.name, module.instanceName );
+
+		if ( ! ignoreUniqueInstanceError ) {
+			this.logError( msg, "YomboServer.stopModule", module.name, module.instanceName );
+		}
+
+		if ( onStop ) {
+			onStop();
+		}
 		return msg;
 
 	}
@@ -465,22 +487,21 @@ YomboServer.TheServer.prototype.stopModule = function( module, onStop ) {
 
 	module.clients = [];
 
-	var scope = this;
-	module.stop( function() {
-
-		scope.talkToListeners( "stopModule", module );
-
-		scope.logSystem( "Module stopped", "YomboServer.stopModule", module.name, module.instanceName );
-
-		if ( onStop ) {
-
-			onStop();
-
-		}
-
-	} );
-
 	this.modules.splice( index, 1 );
+
+	var scope = this;
+	setImmediate( function() {
+		module.stop( function() {
+
+			scope.talkToListeners( "stopModule", module );
+
+			scope.logSystem( "Module stopped", "YomboServer.stopModule", module.name, module.instanceName );
+
+			if ( onStop ) {
+				onStop();
+			}
+		} );
+	} );
 
 	return null;
 
@@ -886,7 +907,7 @@ YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, mess
 
 YomboServer.TheServer.prototype.removeClient = function( client ) {
 
-	client.socket.disconnect();
+	client.socket.client.disconnect();
 
 };
 
