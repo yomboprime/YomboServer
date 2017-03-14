@@ -1,6 +1,6 @@
 {
 
-    "host": "localhost",
+    "host": "",
 
     "listenPort": 12345,
 
@@ -23,6 +23,19 @@
             "instanceName": "theAppReg",
             "enabled": true,
             "config": {
+            }
+        },
+        {
+            "name": "games",
+            "instanceName": "SimpleWorldGame",
+            "enabled": true,
+            "config": {
+                "gameName": "SimpleWorld",
+                "gameDescription": "A SimpleWorld game",
+                "maxRooms": 1,
+                "maxPlayersPerRoom": 8,
+                "gameConfig": {
+                }
             }
         },
         {
@@ -102,6 +115,11 @@
         },
         {
             "name": "camcap",
+            "uniqueInstance": false,
+            "canStop": true
+        },
+        {
+            "name": "games",
             "uniqueInstance": false,
             "canStop": true
         }

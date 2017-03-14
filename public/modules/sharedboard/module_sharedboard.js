@@ -98,12 +98,12 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 		}
 		room.sharedboard = {
 			latestPaintCommands: [ this.createEraseWhiteCommand() ]
-		}
+		};
 	}
 
 	client.sharedboard = {
 		room: room
-	}
+	};
 
 	// Insert client into the room
 	this.yomboServer.joinClientToRoom( client, room );

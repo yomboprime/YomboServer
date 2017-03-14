@@ -593,6 +593,19 @@ YomboServer.TheServer.prototype.searchByValue = function( array, member, value )
 
 };
 
+YomboServer.TheServer.prototype.getFunctionBody = function( theFunction ) {
+
+	var str = theFunction.toString();
+
+	var first = str.indexOf( '\n' );
+	first = first < 0 ? 0 : first;
+	var last = str.lastIndexOf( '\n' );
+	last = last < 0 ? str.length : last;
+
+	return str.substring( first, last );
+
+};
+
 YomboServer.TheServer.prototype.loadConfig = function() {
 
 	this.logSystem( "Loading config file in ./config.json", "YomboServer.loadConfig" );
@@ -950,7 +963,16 @@ YomboServer.TheServer.prototype.getURLParameters = function( url ) {
 
 YomboServer.TheServer.prototype.gethostURL = function( path ) {
 
-	return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
+	if ( this.config.host !== "" ) {
+	
+		return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
+
+	}
+	else {
+
+		return "/" + path;
+
+	}
 
 };
 

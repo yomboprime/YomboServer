@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simple multiplayer world</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	    body {
+		background-color: black;
+		margin: 0px;
+                overflow: hidden;
+	    }
+	    #presentationCanvas {
+		position: absolute;
+		top: 0px;
+		left: 0px;
+	    }
+	    .unselectable {
+		-moz-user-select: -moz-none;
+		-khtml-user-select: none;
+		-webkit-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	    }
+        </style>
+
+        <script src="/socket.io/socket.io.js"></script>
+
+    </head>
+
+    <body>
+
+	<script id='sap-ui-bootstrap'
+            src='/public/lib/openui5/resources/sap-ui-core.js'
+            data-sap-ui-theme='sap_bluecrystal'
+            data-sap-ui-libs='sap.m,sap.ui.layout,sap.ui.unified,sap.ui.commons,sap.ui.core'
+            data-sap-ui-compatVersion='edge'
+            data-sap-ui-preload='async'>
+        </script>
+
+	<script src="/public/lib/three/three.js"></script>
+	<script src="/public/lib/three/STLLoader.js"></script>
+	<script src="/public/lib/three/MTLLoader.js"></script>
+	<script src="/public/lib/three/OBJLoader.js"></script>
+	<script src="/public/lib/three/ColladaLoader2.js"></script>
+
+	<script> var gameModuleName = "SimpleWorldGame"; </script>
+
+        <script src="../gameClient.js"></script>
+
+    </body>
+</html>

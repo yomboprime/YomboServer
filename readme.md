@@ -62,13 +62,26 @@ Client --> Module:
 
 Module --> Client:
 
- - `"yssbPaintCommand"
+ - `"yssbPaintCommand"`
 
 Client --> Module:
 
- - `"yssbPaintCommand"
- - `"yssbGetLatestData"
+ - `"yssbPaintCommand"`
+ - `"yssbGetLatestData"`
 
+
+### games module
+
+Module --> Client:
+
+ - `"gmNewEntityClass"`
+ - `"gmNewEntity"`
+ - `"gmNewEntities"`
+ - `"gmData"`
+
+Client --> Module:
+
+ - `"gmInput"`
 
 -------------------------------------------------------
 
@@ -89,10 +102,10 @@ admin:
     restart all modules
     shutdown all modules
     shutdown server
-    log
+    V - log
 
 camcap module:
-    make failure modes recovery
+    V - make failure modes recovery
 
 webrtc module:
 
