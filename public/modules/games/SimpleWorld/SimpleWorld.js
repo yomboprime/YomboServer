@@ -1,4 +1,6 @@
 
+var getNanos = require( "../../../lib/realTime/realTime" );
+
 if ( typeof module !== 'undefined' ) {
 
 	module.exports = {
@@ -38,13 +40,13 @@ function init( gamesModule ) {
 	var q2 = new THREE.Quaternion();
 	var v1 = new THREE.Vector3();
 
-	var time = process.hrtime();
+	//var time = process.hrtime();
+        var deltaTime = getNanos() / 1000000000;
 
 	// Game loop
 	setInterval( function() {
 
-		process.hrtime( time );
-		var deltaTime = time[ 1 ] / 1000000000;
+		deltaTime = getNanos() / 1000000000;
 
 		// Physics
 		var n = activeEntities.length;
