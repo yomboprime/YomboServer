@@ -26,6 +26,13 @@
             }
         },
         {
+            "name": "maps",
+            "instanceName": "YomboMaps",
+            "enabled": true,
+            "config": {
+            }
+        },
+        {
             "name": "games",
             "instanceName": "SimpleWorldGame",
             "enabled": true,
@@ -121,6 +128,11 @@
         {
             "name": "games",
             "uniqueInstance": false,
+            "canStop": true
+        },
+        {
+            "name": "maps",
+            "uniqueInstance": true,
             "canStop": true
         }
     ]

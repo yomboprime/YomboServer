@@ -35,7 +35,7 @@ YomboServer.TheServer = function () {
 
 	this.theLog = [];
 	this.logConsoleTypes = [ "System" ];
-	this.logConsoleFields = [ "type", "category", "instanceName", "moduleName", "message" ]
+	this.logConsoleFields = [ "type", "category", "instanceName", "moduleName", "message" ];
 	this.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
 
 	// Active modules
@@ -422,6 +422,8 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
 	module.rooms = [];
 	module.clientEvents = [];
 	module.listenersObject = {};
+        module.tokens = [];
+        module.tokensRaw = [];
 
 	this.modules.push( module );
 
@@ -906,6 +908,33 @@ YomboServer.TheServer.prototype.mapFileArray = function() {
 
 	}
 
+};
+
+YomboServer.TheServer.prototype.mapDirectoryWithToken = function( path, pathPreamble, tokenArray ) {
+    
+    // The token must be the first parameter of the request
+
+	var index = this.servedRoutes.indexOf( path );
+
+	if ( index < 0 ) {
+
+		this.servedRoutes.push( path );
+
+		this.app.use( path, function( req, res, next ) {
+
+                    var reqToken = req.query.token;
+                    if ( reqToken ) {
+                        var originalUrl = req.originalUrl;
+                        var index = originalUrl.indexOf( "?" );
+                        if ( index >= 0 ) {
+                            console.log( "CONEXION: token = " + reqToken );
+                          if ( reqToken in tokenArray ) {
+                                res.sendFile( __dirname + pathPreamble + originalUrl.substring( 0, index ) );
+                          }
+                        }
+                    }
+		} );
+	}
 };
 
 YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, message ) {

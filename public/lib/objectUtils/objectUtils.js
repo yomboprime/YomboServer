@@ -6,7 +6,10 @@ if ( typeof module !== undefined ) {
     module.exports = {
         getObjectSerializedAsString: getObjectSerializedAsString,
         copyObject: copyObject,
-        extendObject: extendObject
+        iterateProperties: iterateProperties,
+        extendObject: extendObject,
+        isObject: isObject,
+        isArray: isArray
     };
 }
 
@@ -28,26 +31,45 @@ function getObjectSerializedAsString( objectJSON, beautified ) {
 
 function copyObject( objectToCopy ) {
 
-    var key = null;
-
-    return extendObject( { }, objectToCopy, key );
+    if ( isObject( objectToCopy ) ) {
+        return extendObject( { }, objectToCopy );
+    }
+    else if ( isArray( objectToCopy ) ) {
+        return extendObject( [], objectToCopy );
+    }
+    else {
+        return objectToCopy;
+    }
 
 }
 
-function extendObject( original, context, key ) {
+function iterateProperties( object, callback ) {
+    
+    for ( var key in object ) {
+
+        if ( object.hasOwnProperty( key ) ) {
+        
+            callback( object[ key ] );
+
+        }
+        
+    }
+}
+
+function extendObject( original, context ) {
 
     // Extends original with context properties. Returns original.
 
-    for ( key in context ) {
+    for ( var key in context ) {
 
         if ( context.hasOwnProperty( key ) ) {
 
-            if ( Object.prototype.toString.call( context[ key ] ) === '[object Object]' ) {
+            if ( isObject( context[ key ] ) ) {
 
                 original[ key ] = extendObject( original[ key ] || { }, context[ key ] );
 
             }
-            else if ( Object.prototype.toString.call( context[ key ] ) === '[object Array]' ) {
+            else if ( isArray( context[ key ] )  ) {
 
                 original[ key ] = extendObject( original[ key ] || [ ], context[ key ] );
 
@@ -62,4 +84,12 @@ function extendObject( original, context, key ) {
 
     return original;
 
+}
+
+function isObject( object ) {
+    return Object.prototype.toString.call( object ) === '[object Object]';
+}
+
+function isArray( object ) {
+    return Object.prototype.toString.call( object ) === '[object Array]';
 }
