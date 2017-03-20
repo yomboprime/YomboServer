@@ -24,221 +24,221 @@ var uiColorPicker = null;
 
 sap.ui.getCore().attachInit( function() {
 
-	init();
+    init();
 
 } );
 
 function init() {
 
-	// Socket for communications with the server
+    // Socket for communications with the server
     var socket = io();
 
-	// The shared board object
-	sharedBoard = new sharedboard();
+    // The shared board object
+    sharedBoard = new sharedboard();
 
-	// Create UI
-	contextMenu = createContextMenu();
-	toolbar = createToolbar( sharedBoard, function( selectedTool ) {
-		var blit = false;
-		if ( selectedTool.name !== "text" ) {
-			textToolDialog.dialog.close();
-			blit = true;
-		}
-		if ( selectedTool.name !== "file" ) {
-			fileToolDialog.dialog.close();
-			blit = true;
-		}
-		if ( blit ) {
-			sharedBoard.blit();
-		}
-	} );
-	textToolDialog = createTextToolDialog( sharedBoard );
-	fileToolDialog = createFileToolDialog( sharedBoard );
+    // Create UI
+    contextMenu = createContextMenu();
+    toolbar = createToolbar( sharedBoard, function( selectedTool ) {
+        var blit = false;
+        if ( selectedTool.name !== "text" ) {
+            textToolDialog.dialog.close();
+            blit = true;
+        }
+        if ( selectedTool.name !== "file" ) {
+            fileToolDialog.dialog.close();
+            blit = true;
+        }
+        if ( blit ) {
+            sharedBoard.blit();
+        }
+    } );
+    textToolDialog = createTextToolDialog( sharedBoard );
+    fileToolDialog = createFileToolDialog( sharedBoard );
 
-	sharedBoard.init( firstCanvas, presentationCanvas, socket, "thesharedboard" );
+    sharedBoard.init( firstCanvas, presentationCanvas, socket, "thesharedboard" );
 
-	// Add event listeners
-	window.addEventListener( 'mousedown', onMouseDown, false );
-	window.addEventListener( 'mousemove', onMouseMove, false );
+    // Add event listeners
+    window.addEventListener( 'mousedown', onMouseDown, false );
+    window.addEventListener( 'mousemove', onMouseMove, false );
     window.addEventListener( 'mouseup', onMouseUp, false );
-	window.addEventListener( 'mouseleave', onMouseUp, false );
-	window.addEventListener( "resize", onWindowResize, false );
+    window.addEventListener( 'mouseleave', onMouseUp, false );
+    window.addEventListener( "resize", onWindowResize, false );
 
-	document.oncontextmenu = function( event ) {
+    document.oncontextmenu = function( event ) {
 
-		showContextMenu( event.clientX, event.clientY );
+        showContextMenu( event.clientX, event.clientY );
 
-		return false;
+        return false;
 
-	};
+    };
 
-	// First resize
-	onWindowResize();
-	
+    // First resize
+    onWindowResize();
+
 }
 
 function onWindowResize() {
 
-	var w = window.innerWidth;
-	var h = window.innerHeight;
+    var w = window.innerWidth;
+    var h = window.innerHeight;
 
-	var size = Math.min( w, h );
+    var size = Math.min( w, h );
 
-	sharedBoard.resize( size );
+    sharedBoard.resize( size );
 
 }
 
 function onMouseDown( event ) {
 
-	if ( event.target !== presentationCanvas ) {
-		
-		return;
-		
-	}
+    if ( event.target !== presentationCanvas ) {
 
-	if ( event.button !== 0 ) {
+        return;
 
-		return;
+    }
 
-	}
+    if ( event.button !== 0 ) {
 
-	var x = event.clientX / presentationCanvas.width;
-	var y = event.clientY / presentationCanvas.height;
+        return;
 
-	if ( uiColorPicker ) {
+    }
 
-		pickColor( x, y, true );
+    var x = event.clientX / presentationCanvas.width;
+    var y = event.clientY / presentationCanvas.height;
 
-	}
-	else {
+    if ( uiColorPicker ) {
 
-		sharedBoard.guiStartCommand( x, y );
+        pickColor( x, y, true );
 
-		if ( sharedBoard.currentToolState.selectedTool.name === "text" ) {
+    }
+    else {
 
-			showTextToolDialog();
+        sharedBoard.guiStartCommand( x, y );
 
-		}
+        if ( sharedBoard.currentToolState.selectedTool.name === "text" ) {
 
-	}
+            showTextToolDialog();
+
+        }
+
+    }
 
 }
 
 function onMouseMove( event ) {
 
-	if ( event.target !== presentationCanvas ) {
+    if ( event.target !== presentationCanvas ) {
 
-		return;
+        return;
 
-	}
+    }
 
-	var x = event.clientX / presentationCanvas.width;
-	var y = event.clientY / presentationCanvas.height;
+    var x = event.clientX / presentationCanvas.width;
+    var y = event.clientY / presentationCanvas.height;
 
-	if ( uiColorPicker ) {
+    if ( uiColorPicker ) {
 
-		pickColor( x, y, false );
+        pickColor( x, y, false );
 
-	}
-	else {
+    }
+    else {
 
-		if ( sharedBoard.currentToolState.selectedTool.name !== "text" ) {
+        if ( sharedBoard.currentToolState.selectedTool.name !== "text" ) {
 
-			sharedBoard.guiContinueCommand( x, y );
+            sharedBoard.guiContinueCommand( x, y );
 
-		}
+        }
 
-	}
+    }
 
 }
 
 function onMouseUp( event ) {
 
-	if ( event.target !== presentationCanvas ) {
+    if ( event.target !== presentationCanvas ) {
 
-		return;
-		
-	}
+        return;
 
-	var currentTool = sharedBoard.currentToolState.selectedTool.name;
+    }
 
-	if ( currentTool === "file" ) {
+    var currentTool = sharedBoard.currentToolState.selectedTool.name;
 
-		sharedBoard.guiStateDown = false;
+    if ( currentTool === "file" ) {
 
-		showFileToolDialog();
+        sharedBoard.guiStateDown = false;
 
-	}
-	else if ( currentTool !== "text" ) {
+        showFileToolDialog();
 
-		var x = event.clientX / presentationCanvas.width;
-		var y = event.clientY / presentationCanvas.height;
+    }
+    else if ( currentTool !== "text" ) {
 
-		sharedBoard.guiEndCommand( x, y );
+        var x = event.clientX / presentationCanvas.width;
+        var y = event.clientY / presentationCanvas.height;
 
-	}
+        sharedBoard.guiEndCommand( x, y );
+
+    }
 
 }
 
 function showContextMenu( x, y ) {
 
-	contextMenu.close();
-	contextMenu.open( false, null, "left top", "left top", presentationCanvas, "" + x + " " + y, "fit" );
+    contextMenu.close();
+    contextMenu.open( false, null, "left top", "left top", presentationCanvas, "" + x + " " + y, "fit" );
 
 }
 
 function showToolbar() {
 
-	toolbar.close();
-	toolbar.open();
-	toolbar.focus();
+    toolbar.close();
+    toolbar.open();
+    toolbar.focus();
 
 }
 
 function showTextToolDialog() {
 
-	textToolDialog.dialog.open();
+    textToolDialog.dialog.open();
 
-	refreshTextToolDialogCommand( sharedBoard, textToolDialog );
+    refreshTextToolDialogCommand( sharedBoard, textToolDialog );
 
-	textToolDialog.dialog.focus();
+    textToolDialog.dialog.focus();
 
 }
 
 function showFileToolDialog() {
 
-	fileToolDialog.dialog.open();
+    fileToolDialog.dialog.open();
 
-	refreshFileToolDialogCommand( sharedBoard, fileToolDialog );
+    refreshFileToolDialogCommand( sharedBoard, fileToolDialog );
 
-	fileToolDialog.dialog.focus();
+    fileToolDialog.dialog.focus();
 
 }
 
 function pickColor( x, y, store ) {
 
-	if ( ! uiColorPicker ) {
-		return;
-	}
+    if ( ! uiColorPicker ) {
+        return;
+    }
 
-	var color = getPixelFromCanvas( x * firstCanvas.width, y * firstCanvas.height, firstCanvas );
+    var color = getPixelFromCanvas( x * firstCanvas.width, y * firstCanvas.height, firstCanvas );
 
-	uiColorPicker.setColorString( color );
-	uiColorPicker.rerender();
+    uiColorPicker.setColorString( color );
+    uiColorPicker.rerender();
 
-	if ( store ) {
-		uiColorPicker = null;
-	}
+    if ( store ) {
+        uiColorPicker = null;
+    }
 
 }
 
 function getPixelFromCanvas( x, y, canvas ) {
 
-	var ctx = canvas.getContext( "2d" );
+    var ctx = canvas.getContext( "2d" );
 
-	var canvasData = ctx.getImageData( x, y, 1, 1 );
+    var canvasData = ctx.getImageData( x, y, 1, 1 );
     var pixelData = canvasData.data;
 
-	return "rgb(" + pixelData[ 0 ] + ", " + pixelData[ 1 ] + ", " + pixelData[ 2 ] + ")";
+    return "rgb(" + pixelData[ 0 ] + ", " + pixelData[ 1 ] + ", " + pixelData[ 2 ] + ")";
 
 }

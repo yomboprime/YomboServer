@@ -4,34 +4,34 @@ var socket;
 var dialog;
 
 sap.ui.getCore().attachInit( function() {
-	init();
+    init();
 } );
 
 function init() {
 
-	changeFavicon( "/favicon.png" );
+    changeFavicon( "/favicon.png" );
 
     socket = io();
 
     socket.on( "ysAppReg", function( msg ) {
 
-		initUI( msg );
+        initUI( msg );
 
-	} );
+    } );
 
-	socket.on( "disconnect", function( msg ) {
-		alert( "The connection with the server was closed." );
-	} );
+    socket.on( "disconnect", function( msg ) {
+        alert( "The connection with the server was closed." );
+    } );
 
-	socket.emit( "ysConnectToModule", { moduleName: "appreg" } );
+    socket.emit( "ysConnectToModule", { moduleName: "appreg" } );
 
 }
 
 function initUI( applications ) {
 
-	if ( dialog ) {
-		dialog.close();
-	}
+    if ( dialog ) {
+        dialog.close();
+    }
 
     dialog = new sap.ui.commons.Dialog();
 
@@ -44,9 +44,9 @@ function initUI( applications ) {
     dialog.addStyleClass( "unselectable" );
 //    dialog.setKeepInWindow( true );
 
-    var appsItems = [ ];
-    for ( var i = 0; i < applications.length; i++ ) {
-		var app = applications[ i ];
+    var appsItems = [];
+    for ( var i = 0; i < applications.length; i ++ ) {
+        var app = applications[ i ];
         var item = new sap.m.DisplayListItem( {
             label: app.name,
             value: app.description,

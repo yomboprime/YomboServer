@@ -1,7 +1,7 @@
 
 var appreg = {
 
-	VERSION_STRING: "r1"
+    VERSION_STRING: "r1"
 
 };
 
@@ -9,9 +9,9 @@ var appreg = {
 
 if ( typeof module !== 'undefined' ) {
 
-	module.exports = {
-		appreg: appreg
-	};
+    module.exports = {
+        appreg: appreg
+    };
 
 }
 
@@ -22,66 +22,66 @@ if ( typeof module !== 'undefined' ) {
 
 appreg.appreg = function() {
 
-	// Nothing to do
+    // Nothing to do
 
 };
 
 appreg.appreg.prototype = {
 
-	constructor: appreg.appreg
+    constructor: appreg.appreg
 
 };
 
 appreg.appreg.prototype.start = function( onStart ) {
 
-	this.yomboServer.mapFile( "/public/modules/appreg/main_appreg.js" );
+    this.yomboServer.mapFile( "/public/modules/appreg/main_appreg.js" );
 
-	this.yomboServer.mapDirectory( '/public/lib/openui5' );
+    this.yomboServer.mapDirectory( '/public/lib/openui5' );
 
-	var scope = this;
+    var scope = this;
 
-	var appFunction = function() {
+    var appFunction = function() {
 
-		scope.yomboServer.emitToClientsArray( scope.clients, "ysAppReg", scope.getApplicationsMessage() );
+        scope.yomboServer.emitToClientsArray( scope.clients, "ysAppReg", scope.getApplicationsMessage() );
 
-	};
-	this.yomboServer.registerListener( this, "registerApplication", appFunction );
-	this.yomboServer.registerListener( this, "unregisterApplication", appFunction );
+    };
+    this.yomboServer.registerListener( this, "registerApplication", appFunction );
+    this.yomboServer.registerListener( this, "unregisterApplication", appFunction );
 
-	if ( onStart ) {
+    if ( onStart ) {
 
-		onStart();
+        onStart();
 
-	}
+    }
 
 };
 
 appreg.appreg.prototype.stop = function( onStop ) {
 
-	if ( onStop ) {
+    if ( onStop ) {
 
-		onStop();
+        onStop();
 
-	}
+    }
 
 };
 
 appreg.appreg.prototype.clientConnection = function( client ) {
 
-	client.socket.emit( "ysAppReg", this.getApplicationsMessage() );
+    client.socket.emit( "ysAppReg", this.getApplicationsMessage() );
 
-	return true;
+    return true;
 
 };
 
 appreg.appreg.prototype.clientDisconnection = function( client ) {
 
-	// Nothing to do here yet
+    // Nothing to do here yet
 
 };
 
 appreg.appreg.prototype.getApplicationsMessage = function() {
 
-	return this.yomboServer.applications;
+    return this.yomboServer.applications;
 
 };

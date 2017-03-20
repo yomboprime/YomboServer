@@ -1,9 +1,9 @@
 
 var YomboServer = {
 
-	VERSION_STRING: "r1",
+    VERSION_STRING: "r1",
 
-	DEFAULT_MAX_LOG_SIZE: 100
+    DEFAULT_MAX_LOG_SIZE: 100
 
 };
 
@@ -11,7 +11,7 @@ var YomboServer = {
 
 if ( typeof module !== 'undefined' ) {
 
-	module.exports = YomboServer;
+    module.exports = YomboServer;
 
 }
 
@@ -25,637 +25,637 @@ var io = require( 'socket.io' )( http );
 
 // ***** YomboServer class *****
 
-YomboServer.TheServer = function () {
+YomboServer.TheServer = function() {
 
-	process.title = "Yomboserver";
+    process.title = "Yomboserver";
 
-	this.inited = false;
+    this.inited = false;
 
-	this.config = null;
+    this.config = null;
 
-	this.theLog = [];
-	this.logConsoleTypes = [ "System" ];
-	this.logConsoleFields = [ "type", "category", "instanceName", "moduleName", "message" ];
-	this.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
+    this.theLog = [];
+    this.logConsoleTypes = ["System"];
+    this.logConsoleFields = ["type", "category", "instanceName", "moduleName", "message"];
+    this.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
 
-	// Active modules
-	this.modules = [];
+    // Active modules
+    this.modules = [];
 
-	// Routes that have been served (can't un-serve)
-	this.servedRoutes = [];
+    // Routes that have been served (can't un-serve)
+    this.servedRoutes = [];
 
-	// Resources
-	this.fs = fs;
-	this.http = http;
-	this.app = app;
-	this.express = express;
-	this.io = io;
+    // Resources
+    this.fs = fs;
+    this.http = http;
+    this.app = app;
+    this.express = express;
+    this.io = io;
 
-	// Listeners
-	this.listenerFunctionNames = [
-		"startModule",
-		"stopModule",
-		"clientConnected",
-		"clientDisconnected",
-		"clientConnectedToModule",
-		"clientDisconnectedFromModule",
-		"registerApplication",
-		"unregisterApplication",
-		"log",
-		"shutdown"
-	];
-	this.listeners = {};
-	for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i++ ) {
+    // Listeners
+    this.listenerFunctionNames = [
+        "startModule",
+        "stopModule",
+        "clientConnected",
+        "clientDisconnected",
+        "clientConnectedToModule",
+        "clientDisconnectedFromModule",
+        "registerApplication",
+        "unregisterApplication",
+        "log",
+        "shutdown"
+    ];
+    this.listeners = { };
+    for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i ++ ) {
 
-		this.listeners[ this.listenerFunctionNames[ i ] ] = [];
+        this.listeners[ this.listenerFunctionNames[ i ] ] = [];
 
-	}
+    }
 
-	// Clients
-	this.clients = [];
+    // Clients
+    this.clients = [];
 
-	// Registered applications
-	this.applications = [];
+    // Registered applications
+    this.applications = [];
 
-	this.LOCAL_HOST_V4 = "::ffff:127.0.0.1";
-	this.LOCAL_HOST_V6 = "::1";
+    this.LOCAL_HOST_V4 = "::ffff:127.0.0.1";
+    this.LOCAL_HOST_V6 = "::1";
 };
 
 YomboServer.TheServer.prototype = {
 
-	constructor: YomboServer
+    constructor: YomboServer
 
 };
 
 YomboServer.TheServer.prototype.run = function() {
 
-	if ( this.inited ) {
-		this.logWarning( "Server already running", "YomboServer.run" );
-		return;
-	}
+    if ( this.inited ) {
+        this.logWarning( "Server already running", "YomboServer.run" );
+        return;
+    }
 
-	this.logSystem( "YomboServer " + YomboServer.VERSION_STRING + " is starting" );
+    this.logSystem( "YomboServer " + YomboServer.VERSION_STRING + " is starting" );
 
-	var scope = this;
+    var scope = this;
 
-	// Termination signal
-	process.on( "SIGINT", function() {
-		scope.logSystem( "SIGINT Signal Received, shutting down" );
-		scope.shutDown();
-	} );
+    // Termination signal
+    process.on( "SIGINT", function() {
+        scope.logSystem( "SIGINT Signal Received, shutting down" );
+        scope.shutDown();
+    } );
 
-	// Load config
-	this.config = this.loadConfig();
-	if ( this.config === null ) {
-		return;
-	}
+    // Load config
+    this.config = this.loadConfig();
+    if ( this.config === null ) {
+        return;
+    }
 
-	// Serve internal yomboserver services
-	this.serveInternalServices();
+    // Serve internal yomboserver services
+    this.serveInternalServices();
 
     // Setup connection with socket.io client
     io.on( 'connection', function( socket ) {
 
-		scope.clientConnection( socket );
+        scope.clientConnection( socket );
 
-	} );
+    } );
 
-	// Start listening
-	var port = this.config.listenPort;
-	var scope = this;
-	http.listen( port, function() {
+    // Start listening
+    var port = this.config.listenPort;
+    var scope = this;
+    http.listen( port, function() {
 
-		// Start YomboServer modules
-		scope.startModules();
+        // Start YomboServer modules
+        scope.startModules();
 
-		scope.inited = true;
+        scope.inited = true;
 
-		scope.logSystem( "YomboServer inited and listening on port " + port );
+        scope.logSystem( "YomboServer inited and listening on port " + port );
 
-	} );
+    } );
 
 };
 
 YomboServer.TheServer.prototype.shutDown = function() {
-	
-	this.logSystem( "YomboServer is shutting down" );
 
-	// Send shutdown event to listeners
-	this.talkToListeners( "shutdown" );
+    this.logSystem( "YomboServer is shutting down" );
 
-	var scope = this;
+    // Send shutdown event to listeners
+    this.talkToListeners( "shutdown" );
 
-	this.stopModules( function() {
+    var scope = this;
 
-		setImmediate( function() {
+    this.stopModules( function() {
 
-			scope.logSystem( "YomboServer closed. Have a nice day! :-)" );
+        setImmediate( function() {
 
-			process.exit( 0 );
+            scope.logSystem( "YomboServer closed. Have a nice day! :-)" );
 
-		} );
+            process.exit( 0 );
 
-	} );
+        } );
+
+    } );
 
 };
 
 YomboServer.TheServer.prototype.serveInternalServices = function() {
 
-	if ( this.inited ) {
-		this.logWarning( "Server already running", "YomboServer.serveInternalServices" );
-		return;
-	}
+    if ( this.inited ) {
+        this.logWarning( "Server already running", "YomboServer.serveInternalServices" );
+        return;
+    }
 
-	// Serve root index.html
+    // Serve root index.html
     this.app.get( '/', function( req, res ) {
 
         res.sendFile( __dirname + '/public/index.html' );
 
     } );
 
-	// Serve favicon
-	this.app.get( '/favicon.png', function( req, res ) {
+    // Serve favicon
+    this.app.get( '/favicon.png', function( req, res ) {
 
         res.sendFile( __dirname + '/public/favicon.png' );
 
     } );
 
-	// Serve changefavicon lib
-	this.mapFile( "/public/lib/changefavicon/changefavicon.js" );
+    // Serve changefavicon lib
+    this.mapFile( "/public/lib/changefavicon/changefavicon.js" );
 
-	// Serve favicons asset directory
-	this.mapDirectory( '/public/assets/favicons' );
+    // Serve favicons asset directory
+    this.mapDirectory( '/public/assets/favicons' );
 
-	var scope = this;
+    var scope = this;
 
-	// Serve Application registry service
+    // Serve Application registry service
     var appRegFunction = function( req, res ) {
 
-		var result = "ERROR";
+        var result = "ERROR";
 
-		if ( scope.isLocalRequest( req ) ) {
-			var params = scope.getURLParameters( req.url );
-			var appURL = scope.searchByValue( params, "name", "appURL" );
-			if ( appURL ) {
-				var action = scope.searchByValue( params, "name", "action" );
-				if ( action.value === "register") {
-					var appName = scope.searchByValue( params, "name", "appName" );
-					if ( appName ) {
-						var description = "";
-						var appDescription = scope.searchByValue( params, "name", "appDescription" );
-						if ( appDescription ) {
-							description = appDescription.value;
-						}
-						scope.registerApplication( appName.value, description, appURL.value );
-						result = "OK";
-					}
-				}
-				else if ( action.value === "unregister" ) {
-					scope.unregisterApplication( appURL.value )
-					result = "OK";
-				}
-			}
-		}
-		res.end( result );
+        if ( scope.isLocalRequest( req ) ) {
+            var params = scope.getURLParameters( req.url );
+            var appURL = scope.searchByValue( params, "name", "appURL" );
+            if ( appURL ) {
+                var action = scope.searchByValue( params, "name", "action" );
+                if ( action.value === "register" ) {
+                    var appName = scope.searchByValue( params, "name", "appName" );
+                    if ( appName ) {
+                        var description = "";
+                        var appDescription = scope.searchByValue( params, "name", "appDescription" );
+                        if ( appDescription ) {
+                            description = appDescription.value;
+                        }
+                        scope.registerApplication( appName.value, description, appURL.value );
+                        result = "OK";
+                    }
+                }
+                else if ( action.value === "unregister" ) {
+                    scope.unregisterApplication( appURL.value )
+                    result = "OK";
+                }
+            }
+        }
+        res.end( result );
     };
-	
-	this.app.get( '/appRegService', appRegFunction );
-	this.app.post( '/appRegService', appRegFunction );
+
+    this.app.get( '/appRegService', appRegFunction );
+    this.app.post( '/appRegService', appRegFunction );
 
 };
 
 YomboServer.TheServer.prototype.createFunctionWaitNCalls = function( numCalls, onFinish ) {
 
-	var numCallsPerformed = 0;
+    var numCallsPerformed = 0;
 
-	return function waitNCalls() {
+    return function waitNCalls() {
 
-		numCallsPerformed++;
+        numCallsPerformed ++;
 
-		if ( numCallsPerformed >= numCalls ) {
+        if ( numCallsPerformed >= numCalls ) {
 
-			if ( onFinish ) {
+            if ( onFinish ) {
 
-				onFinish();
+                onFinish();
 
-			}
+            }
 
-		}
+        }
 
-	};
+    };
 
 };
 
 YomboServer.TheServer.prototype.startModules = function( onStart ) {
 
-	// Starts all current module instances. The onStart executes when all modules have started.
+    // Starts all current module instances. The onStart executes when all modules have started.
 
-	this.logSystem( "Starting all module instances" );
+    this.logSystem( "Starting all module instances" );
 
-	var launchConfigurations = this.config.launchConfigurations;
+    var launchConfigurations = this.config.launchConfigurations;
 
-	var numModules = launchConfigurations.length;
+    var numModules = launchConfigurations.length;
 
-	var onStartInternal = null;
-	if ( onStart ) {
+    var onStartInternal = null;
+    if ( onStart ) {
 
-		onStartInternal = createFunctionWaitNCalls( numModules, onStart );
+        onStartInternal = createFunctionWaitNCalls( numModules, onStart );
 
-	};
+    }
 
-	for ( var i = 0; i < numModules; i++ ) {
+    for ( var i = 0; i < numModules; i ++ ) {
 
-		var launchConfig = launchConfigurations[ i ];
+        var launchConfig = launchConfigurations[ i ];
 
-		if ( launchConfig.enabled ) {
+        if ( launchConfig.enabled ) {
 
-			this.startModule( launchConfig.name, launchConfig.instanceName, launchConfig.config, onStartInternal, true );
+            this.startModule( launchConfig.name, launchConfig.instanceName, launchConfig.config, onStartInternal, true );
 
-		}
+        }
 
-	}
+    }
 
 };
 
 YomboServer.TheServer.prototype.stopModules = function( onStop ) {
 
-	// Stops all current module instances. The onStop executes when all modules have stopped.
+    // Stops all current module instances. The onStop executes when all modules have stopped.
 
-	this.logSystem( "Stopping all module instances" );
+    this.logSystem( "Stopping all module instances" );
 
-	var numModules = this.modules.length;
+    var numModules = this.modules.length;
 
-	if ( numModules === 0 ) {
+    if ( numModules === 0 ) {
 
-		if ( onStop ) {
-			onStop();
-		}
+        if ( onStop ) {
+            onStop();
+        }
 
-	}
-	else {
+    }
+    else {
 
-		var onStopInternal = null;
-		if ( onStop ) {
-			onStopInternal = this.createFunctionWaitNCalls( numModules, onStop );
-		};
+        var onStopInternal = null;
+        if ( onStop ) {
+            onStopInternal = this.createFunctionWaitNCalls( numModules, onStop );
+        }
 
-		var j = 0;
-		for ( var i = 0; i < numModules; i++ ) {
+        var j = 0;
+        for ( var i = 0; i < numModules; i ++ ) {
 
-			var module = this.modules[ j ];
+            var module = this.modules[ j ];
 
-			if ( module.moduleDefinition.canStop ) {
-				this.stopModule( module, onStopInternal );
-			}
-			else {
+            if ( module.moduleDefinition.canStop ) {
+                this.stopModule( module, onStopInternal );
+            }
+            else {
 
-				j++;
+                j ++;
 
-				if ( onStopInternal ) {
-					onStopInternal();
-				}
-			}
-		}
-	}
+                if ( onStopInternal ) {
+                    onStopInternal();
+                }
+            }
+        }
+    }
 };
 
 YomboServer.TheServer.prototype.restart = function( onRestart ) {
 
-	// Stops all modules. When all modules have stopped, then starts them all. Finally, when all modules are loaded, onRestart is called.
+    // Stops all modules. When all modules have stopped, then starts them all. Finally, when all modules are loaded, onRestart is called.
 
-	var scope = this;
-	this.stopModules( function() {
-		setImmediate( function() {
-			scope.startModules( function() {
+    var scope = this;
+    this.stopModules( function() {
+        setImmediate( function() {
+            scope.startModules( function() {
 
-				if ( onRestart ) {
+                if ( onRestart ) {
 
-					onRestart();
+                    onRestart();
 
-				}
+                }
 
-			} );
-		} );
-	} );
+            } );
+        } );
+    } );
 
 };
 
 YomboServer.TheServer.prototype.startModule = function( name, instanceName, config, onStart, ignoreUniqueInstanceError ) {
 
-	// Starts instance of module
-	// Returns error message or null if success.
+    // Starts instance of module
+    // Returns error message or null if success.
 
-	var moduleDefinition = this.searchByValue( this.config.moduleDefinitions, "name", name );
+    var moduleDefinition = this.searchByValue( this.config.moduleDefinitions, "name", name );
 
-	if ( moduleDefinition === null ) {
+    if ( moduleDefinition === null ) {
 
-		var msg = "Tried to load undefined module: " + name + ". Ignoring module.";
-		this.logError( msg, "YomboServer.startModule", name, instanceName );
-		return msg;
+        var msg = "Tried to load undefined module: " + name + ". Ignoring module.";
+        this.logError( msg, "YomboServer.startModule", name, instanceName );
+        return msg;
 
-	}
+    }
 
-	if ( moduleDefinition.uniqueInstance && this.searchByValue( this.modules, "name", name ) ) {
+    if ( moduleDefinition.uniqueInstance && this.searchByValue( this.modules, "name", name ) ) {
 
-		var msg = "Tried to create a module with uniqueInstance=true and a module with same name already exists. Ignoring module.";
+        var msg = "Tried to create a module with uniqueInstance=true and a module with same name already exists. Ignoring module.";
 
-		if ( ! ignoreUniqueInstanceError ) {
-			this.logError( msg, "YomboServer.startModule", name, instanceName );
-		}
+        if ( ! ignoreUniqueInstanceError ) {
+            this.logError( msg, "YomboServer.startModule", name, instanceName );
+        }
 
-		return msg;
+        return msg;
 
-	}
+    }
 
-	if ( ! moduleDefinition.uniqueInstance && ! moduleDefinition.canStop ) {
+    if ( ! moduleDefinition.uniqueInstance && ! moduleDefinition.canStop ) {
 
-		var msg = "Error while creating module: configuration is inconsistent: canStop=false and uniqueInstance=false. Ignoring attempt.";
-		this.logError( msg, "YomboServer.startModule", name, instanceName );
-		return msg;
+        var msg = "Error while creating module: configuration is inconsistent: canStop=false and uniqueInstance=false. Ignoring attempt.";
+        this.logError( msg, "YomboServer.startModule", name, instanceName );
+        return msg;
 
-	}
+    }
 
-	this.logSystem( "Starting module", "YomboServer.startModule", name, instanceName );
+    this.logSystem( "Starting module", "YomboServer.startModule", name, instanceName );
 
-	// Obtain module code
+    // Obtain module code
 
-	var modulePath = "./public/modules/" + name + "/module_" + name;
-	
-	var moduleCode = require( modulePath );
+    var modulePath = "./public/modules/" + name + "/module_" + name;
 
-	if ( ! moduleCode ) {
+    var moduleCode = require( modulePath );
 
-		var msg = "Error while creating module: " + name + ". Module code could not be loaded. Ignoring module. Tried path: " + modulePath;
-		this.logError( msg, "YomboServer.startModule", name, instanceName );
-		return msg;
+    if ( ! moduleCode ) {
 
-	}
+        var msg = "Error while creating module: " + name + ". Module code could not be loaded. Ignoring module. Tried path: " + modulePath;
+        this.logError( msg, "YomboServer.startModule", name, instanceName );
+        return msg;
 
-	var moduleNameSpace = moduleCode[ name ];
+    }
 
-	if ( ! moduleNameSpace || ! moduleNameSpace[ name ] ) {
+    var moduleNameSpace = moduleCode[ name ];
 
-		var msg = "Error while creating module: " + name + ". Namespace or module class invalid. Ignoring module.";
-		this.logError( msg, "YomboServer.startModule", name, instanceName );
-		return msg;
+    if ( ! moduleNameSpace || ! moduleNameSpace[ name ] ) {
 
-	}
+        var msg = "Error while creating module: " + name + ". Namespace or module class invalid. Ignoring module.";
+        this.logError( msg, "YomboServer.startModule", name, instanceName );
+        return msg;
 
-	// Create instance of module
-	var moduleClass = moduleNameSpace[ name ];
-	var module = new moduleClass();
+    }
 
-	if ( ! module ) {
+    // Create instance of module
+    var moduleClass = moduleNameSpace[ name ];
+    var module = new moduleClass();
 
-		var msg = "Error while creating module: " + name + ". Newly created instance is invalid. Ignoring module.";
-		this.logError( msg, "YomboServer.startModule", name, instanceName );
-		return msg;
+    if ( ! module ) {
 
-	}
+        var msg = "Error while creating module: " + name + ". Newly created instance is invalid. Ignoring module.";
+        this.logError( msg, "YomboServer.startModule", name, instanceName );
+        return msg;
 
-	module.name = name;
-	module.instanceName = this.getInstanceName( module, instanceName );
-	module.config = config;
-	module.moduleDefinition = moduleDefinition;
-	module.clients = [];
-	module.yomboServer = this;
-	module.rooms = [];
-	module.clientEvents = [];
-	module.listenersObject = {};
-        module.tokens = [];
-        module.tokensRaw = [];
+    }
 
-	this.modules.push( module );
+    module.name = name;
+    module.instanceName = this.getInstanceName( module, instanceName );
+    module.config = config;
+    module.moduleDefinition = moduleDefinition;
+    module.clients = [];
+    module.yomboServer = this;
+    module.rooms = [];
+    module.clientEvents = [];
+    module.listenersObject = { };
+    module.tokens = [];
+    module.tokensRaw = [];
 
-	var scope = this;
+    this.modules.push( module );
 
-	module.start( function() {
+    var scope = this;
 
-		scope.talkToListeners( "startModule", module );
+    module.start( function() {
 
-		scope.logSystem( "Module started", "YomboServer.startModule", name, instanceName );
+        scope.talkToListeners( "startModule", module );
 
-		if ( onStart ) {
+        scope.logSystem( "Module started", "YomboServer.startModule", name, instanceName );
 
-			onStart();
+        if ( onStart ) {
 
-		}
+            onStart();
 
-	} );
+        }
 
-	return null;
-	
+    } );
+
+    return null;
+
 };
 
 YomboServer.TheServer.prototype.stopModule = function( module, onStop, ignoreUniqueInstanceError ) {
 
-	// Stops instance of module
-	// Returns error message or null if success.
+    // Stops instance of module
+    // Returns error message or null if success.
 
-	var index = this.modules.indexOf( module );
+    var index = this.modules.indexOf( module );
 
-	if ( index < 0 ) {
-		var msg = "Error stopping module: unknown module";
-		this.logError( msg, "YomboServer.stopModule" );
-		return msg;
-	}
+    if ( index < 0 ) {
+        var msg = "Error stopping module: unknown module";
+        this.logError( msg, "YomboServer.stopModule" );
+        return msg;
+    }
 
-	this.logSystem( "Stopping module", "YomboServer.stopModule", module.name, module.instanceName );
+    this.logSystem( "Stopping module", "YomboServer.stopModule", module.name, module.instanceName );
 
-	if ( ! module.moduleDefinition.canStop ) {
+    if ( ! module.moduleDefinition.canStop ) {
 
-		var msg = "Tried to stop a module with canStop=false. Ignoring attempt.";
+        var msg = "Tried to stop a module with canStop=false. Ignoring attempt.";
 
-		if ( ! ignoreUniqueInstanceError ) {
-			this.logError( msg, "YomboServer.stopModule", module.name, module.instanceName );
-		}
+        if ( ! ignoreUniqueInstanceError ) {
+            this.logError( msg, "YomboServer.stopModule", module.name, module.instanceName );
+        }
 
-		if ( onStop ) {
-			onStop();
-		}
-		return msg;
+        if ( onStop ) {
+            onStop();
+        }
+        return msg;
 
-	}
+    }
 
-	// Emit module disconnection event
-	this.emitToClientsArray( module.clients, "ysDisconnectedFromModule", { moduleName: module.name, instanceName: module.instanceName } );
+    // Emit module disconnection event
+    this.emitToClientsArray( module.clients, "ysDisconnectedFromModule", { moduleName: module.name, instanceName: module.instanceName } );
 
-	// Remove module clients sockets listeners
-	for ( var i = 0; i < module.clients.length; i++ ) {
-		this.removeClientEvents( module, module.clients[ i ] );
-	}
+    // Remove module clients sockets listeners
+    for ( var i = 0; i < module.clients.length; i ++ ) {
+        this.removeClientEvents( module, module.clients[ i ] );
+    }
 
-	this.unregisterListener( module );
+    this.unregisterListener( module );
 
-	module.clients = [];
+    module.clients = [];
 
-	this.modules.splice( index, 1 );
+    this.modules.splice( index, 1 );
 
-	var scope = this;
-	setImmediate( function() {
-		module.stop( function() {
+    var scope = this;
+    setImmediate( function() {
+        module.stop( function() {
 
-			scope.talkToListeners( "stopModule", module );
+            scope.talkToListeners( "stopModule", module );
 
-			scope.logSystem( "Module stopped", "YomboServer.stopModule", module.name, module.instanceName );
+            scope.logSystem( "Module stopped", "YomboServer.stopModule", module.name, module.instanceName );
 
-			if ( onStop ) {
-				onStop();
-			}
-		} );
-	} );
+            if ( onStop ) {
+                onStop();
+            }
+        } );
+    } );
 
-	return null;
+    return null;
 
 };
 
 YomboServer.TheServer.prototype.getInstanceName = function( module, instanceName ) {
 
-	var scope = this;
+    var scope = this;
 
-	function findFreeName( name ) {
+    function findFreeName( name ) {
 
-		// Finds a free instance name of the form "name_<number>" starting with number=1
+        // Finds a free instance name of the form "name_<number>" starting with number=1
 
-		var num = 1;
-		var found = false;
-		var freeName = null;
-		while ( ! found && num < 1000000 ) {
+        var num = 1;
+        var found = false;
+        var freeName = null;
+        while ( ! found && num < 1000000 ) {
 
-			freeName = name + "_" + num;
+            freeName = name + "_" + num;
 
-			if ( scope.searchByValue( scope.modules, "instanceName", freeName ) === null ) {
+            if ( scope.searchByValue( scope.modules, "instanceName", freeName ) === null ) {
 
-				found = true;
+                found = true;
 
-				break;
-			}
-			else {
+                break;
+            }
+            else {
 
-				num ++;
+                num ++;
 
-			}
+            }
 
-		}
+        }
 
-		if ( found ) {
+        if ( found ) {
 
-			return freeName;
+            return freeName;
 
-		}
+        }
 
-		return "Number of instances exceeded.";
+        return "Number of instances exceeded.";
 
-	}
+    }
 
-	if ( instanceName ) {
+    if ( instanceName ) {
 
-		if ( this.searchByValue( this.modules, "instanceName", instanceName ) !== null ) {
+        if ( this.searchByValue( this.modules, "instanceName", instanceName ) !== null ) {
 
-			instanceName = findFreeName( instanceName );
+            instanceName = findFreeName( instanceName );
 
-		}
+        }
 
-	}
-	else {
+    }
+    else {
 
-		instanceName = findFreeName( module.name );
+        instanceName = findFreeName( module.name );
 
-	}
+    }
 
-	return instanceName;
+    return instanceName;
 
 };
 
 YomboServer.TheServer.prototype.removeClientEvents = function( module, client ) {
 
-	var socket = client.socket;
-	var events = module.clientEvents;
-	for ( var i = 0; i < events.length; i++ ) {
-		socket.removeAllListeners( events[ i ] );
-	}
+    var socket = client.socket;
+    var events = module.clientEvents;
+    for ( var i = 0; i < events.length; i ++ ) {
+        socket.removeAllListeners( events[ i ] );
+    }
 
 };
 
 YomboServer.TheServer.prototype.searchByValue = function( array, member, value ) {
 
-	for ( var i = 0, il = array.length; i < il; i++ ) {
+    for ( var i = 0, il = array.length; i < il; i ++ ) {
 
-		var element = array[ i ];
+        var element = array[ i ];
 
-		if ( element[ member ] === value ) {
+        if ( element[ member ] === value ) {
 
-			return element;
+            return element;
 
-		}
+        }
 
-	}
+    }
 
-	return null;
+    return null;
 
 };
 
 YomboServer.TheServer.prototype.getFunctionBody = function( theFunction ) {
 
-	var str = theFunction.toString();
+    var str = theFunction.toString();
 
-	var first = str.indexOf( '\n' );
-	first = first < 0 ? 0 : first;
-	var last = str.lastIndexOf( '\n' );
-	last = last < 0 ? str.length : last;
+    var first = str.indexOf( '\n' );
+    first = first < 0 ? 0 : first;
+    var last = str.lastIndexOf( '\n' );
+    last = last < 0 ? str.length : last;
 
-	return str.substring( first, last );
+    return str.substring( first, last );
 
 };
 
 YomboServer.TheServer.prototype.loadConfig = function() {
 
-	this.logSystem( "Loading config file in ./config.json", "YomboServer.loadConfig" );
+    this.logSystem( "Loading config file in ./config.json", "YomboServer.loadConfig" );
 
-	var configFileContent = null;
+    var configFileContent = null;
 
-	try {
-		configFileContent = fs.readFileSync( "./config.json", "utf-8" );
-	}
-	catch( e ) {
-		if ( e.code === 'ENOENT' ) {
-			this.logError( "Config file not found (path: ./config.json)" , "YomboServer.loadConfig" );
-			return null;
-		}
-		else {
-			throw e;
-		}
-	}
+    try {
+        configFileContent = fs.readFileSync( "./config.json", "utf-8" );
+    }
+    catch ( e ) {
+        if ( e.code === 'ENOENT' ) {
+            this.logError( "Config file not found (path: ./config.json)", "YomboServer.loadConfig" );
+            return null;
+        }
+        else {
+            throw e;
+        }
+    }
 
-	var config = JSON.parse( configFileContent );
+    var config = JSON.parse( configFileContent );
 
-	if ( ! config ) {
-		this.logError( "Error while loading config file in ./config.json", "YomboServer.loadConfig" );
-		return null;
-	}
+    if ( ! config ) {
+        this.logError( "Error while loading config file in ./config.json", "YomboServer.loadConfig" );
+        return null;
+    }
 
-	// Apply default values if they don't exist in the config
-	this.applyDefaultConfigValues( config );
+    // Apply default values if they don't exist in the config
+    this.applyDefaultConfigValues( config );
 
-	return config;
+    return config;
 
 };
 
 YomboServer.TheServer.prototype.applyDefaultConfigValues = function( config ) {
 
-	if ( ! this.isNumeric( config.maxLogSize ) || ! Number.isInteger( config.maxLogSize ) || config.maxLogSize <= 0  ) {
-		this.logWarning( "Config Warning: maxLogSize is not properly set. Setting default value." );
-		config.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
-	}
+    if ( ! this.isNumeric( config.maxLogSize ) || ! Number.isInteger( config.maxLogSize ) || config.maxLogSize <= 0 ) {
+        this.logWarning( "Config Warning: maxLogSize is not properly set. Setting default value." );
+        config.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
+    }
 
-	this.maxLogSize = config.maxLogSize;
-	this.logConsoleTypes = config.logConsoleTypes;
+    this.maxLogSize = config.maxLogSize;
+    this.logConsoleTypes = config.logConsoleTypes;
 
 };
 
 YomboServer.TheServer.prototype.isNumeric = function( n ) {
 
-	return ! isNaN( parseFloat( n ) ) && isFinite( n );
+    return ! isNaN( parseFloat( n ) ) && isFinite( n );
 
 };
 
@@ -665,188 +665,188 @@ YomboServer.TheServer.prototype.isNumeric = function( n ) {
 
 YomboServer.TheServer.prototype.registerApplication = function( name, description, url ) {
 
-	var found = false;
-	for ( var i = 0; i < this.applications.length; i++ ) {
-		var app = this.applications[ i ];
-		if ( app.url === url ) {
-			app.name = name;
-			app.description = description;
-			found = true;
-		}
-	}
+    var found = false;
+    for ( var i = 0; i < this.applications.length; i ++ ) {
+        var app = this.applications[ i ];
+        if ( app.url === url ) {
+            app.name = name;
+            app.description = description;
+            found = true;
+        }
+    }
 
-	if ( ! found ) {
-		this.applications.unshift( {
-			name: name,
-			description: description,
-			url: url
-		} );
-	}
+    if ( ! found ) {
+        this.applications.unshift( {
+            name: name,
+            description: description,
+            url: url
+        } );
+    }
 
-	this.talkToListeners( "registerApplication" );
+    this.talkToListeners( "registerApplication" );
 
 };
 
 YomboServer.TheServer.prototype.unregisterApplication = function( url ) {
 
-	for ( var i = 0; i < this.applications.length; i++ ) {
-		if ( this.applications[ i ].url === url ) {
+    for ( var i = 0; i < this.applications.length; i ++ ) {
+        if ( this.applications[ i ].url === url ) {
 
-			this.applications.splice( i, 1 );
-			this.talkToListeners( "unregisterApplication" );
+            this.applications.splice( i, 1 );
+            this.talkToListeners( "unregisterApplication" );
 
-		}
-	}
+        }
+    }
 
 };
 
 // ***** Log service *****
 
 YomboServer.TheServer.prototype.logInfo = function( message, category, moduleName, instanceName ) {
-	this.log( message, "Info", category, moduleName, instanceName );
+    this.log( message, "Info", category, moduleName, instanceName );
 };
 
 YomboServer.TheServer.prototype.logWarning = function( message, category, moduleName, instanceName ) {
-	this.log( message, "Warning", category, moduleName, instanceName );
+    this.log( message, "Warning", category, moduleName, instanceName );
 };
 
 YomboServer.TheServer.prototype.logError = function( message, category, moduleName, instanceName ) {
-	this.log( message, "Error", category, moduleName, instanceName );
+    this.log( message, "Error", category, moduleName, instanceName );
 };
 
 YomboServer.TheServer.prototype.logSystem = function( message, category, moduleName, instanceName ) {
-	this.log( message, "System", category, moduleName, instanceName );
+    this.log( message, "System", category, moduleName, instanceName );
 };
 
 YomboServer.TheServer.prototype.log = function( message, type, category, moduleName, instanceName ) {
 
-	var logEntry = {
-		message: message.toString(),
-		type: type,
-		category: category,
-		moduleName: moduleName,
-		instanceName: instanceName,
-		timestamp: new Date()
-	};
+    var logEntry = {
+        message: message.toString(),
+        type: type,
+        category: category,
+        moduleName: moduleName,
+        instanceName: instanceName,
+        timestamp: new Date()
+    };
 
-	// Circular log max length control
-	if ( this.theLog.length >= this.maxLogSize ) {
-		this.theLog.shift();
-	}
+    // Circular log max length control
+    if ( this.theLog.length >= this.maxLogSize ) {
+        this.theLog.shift();
+    }
 
-	this.theLog.push( logEntry );
+    this.theLog.push( logEntry );
 
-	this.talkToListeners( "log", logEntry );
+    this.talkToListeners( "log", logEntry );
 
-	// Output to server console
-	if ( this.logConsoleTypes.indexOf( type ) >= 0 ) {
-		var logText = "";
-		var previousField = false;
-		for ( var i = 0; i < this.logConsoleFields.length; i++ ) {
-			var field = logEntry[ this.logConsoleFields[ i ] ];
-			if ( field !== undefined ) {
-				if ( previousField ) {
-					logText += " - ";
-				}
-				logText += field;
-				previousField = true;
-			}
-		}
-		console.log( logText );
-	}
+    // Output to server console
+    if ( this.logConsoleTypes.indexOf( type ) >= 0 ) {
+        var logText = "";
+        var previousField = false;
+        for ( var i = 0; i < this.logConsoleFields.length; i ++ ) {
+            var field = logEntry[ this.logConsoleFields[ i ] ];
+            if ( field !== undefined ) {
+                if ( previousField ) {
+                    logText += " - ";
+                }
+                logText += field;
+                previousField = true;
+            }
+        }
+        console.log( logText );
+    }
 };
 
 // ***** Rooms service *****
 
 YomboServer.TheServer.prototype.internalRoomName = function( module, roomName ) {
 
-	return module.instanceName + "_" + roomName;
-	
+    return module.instanceName + "_" + roomName;
+
 };
 
 YomboServer.TheServer.prototype.getModuleMaxRooms = function( module ) {
 
-	if ( module.config.maxRooms > 0 ) {
-		return module.config.maxRooms;
-	}
+    if ( module.config.maxRooms > 0 ) {
+        return module.config.maxRooms;
+    }
 
-	return 0;
+    return 0;
 
 }
 
 YomboServer.TheServer.prototype.createRoom = function( module, roomName ) {
 
-	var room = this.findRoom( module, roomName );
-	if ( room !== null ) {
-		return room;
-	}
+    var room = this.findRoom( module, roomName );
+    if ( room !== null ) {
+        return room;
+    }
 
-	var maxRooms = this.getModuleMaxRooms( module );
-	if ( module.rooms.length >= maxRooms ) {
-		return null;
-	}
+    var maxRooms = this.getModuleMaxRooms( module );
+    if ( module.rooms.length >= maxRooms ) {
+        return null;
+    }
 
-	// In addition to these members, the room will have an object named after the module it belongs to.
-	room = {
-		name: roomName,
-		internalName: this.internalRoomName( module, roomName ),
-		clients: []
-	};
+    // In addition to these members, the room will have an object named after the module it belongs to.
+    room = {
+        name: roomName,
+        internalName: this.internalRoomName( module, roomName ),
+        clients: []
+    };
 
-	module.rooms.push( room );
+    module.rooms.push( room );
 
-	return room;
+    return room;
 
 };
 
 YomboServer.TheServer.prototype.removeRoom = function( module, roomName ) {
 
-	var room = this.findRoom( module, roomName );
+    var room = this.findRoom( module, roomName );
 
-	if ( room !== null ) {
-		for ( var i = 0; i < room.clients.length; i++ ) {
-			this.removeClientFromRoom( room.clients[ i ], room );
-		}
+    if ( room !== null ) {
+        for ( var i = 0; i < room.clients.length; i ++ ) {
+            this.removeClientFromRoom( room.clients[ i ], room );
+        }
 
-		var index = module.rooms.indexOf( room );
-		if ( index >= 0 ) {
-			module.rooms.splice( index, 1 );
-		}
+        var index = module.rooms.indexOf( room );
+        if ( index >= 0 ) {
+            module.rooms.splice( index, 1 );
+        }
 
-	}
+    }
 
 };
 
 YomboServer.TheServer.prototype.findRoom = function( module, roomName ) {
 
-	var internalName = this.internalRoomName( module, roomName );
+    var internalName = this.internalRoomName( module, roomName );
 
-	return this.searchByValue( module.rooms, "internalName", internalName );
+    return this.searchByValue( module.rooms, "internalName", internalName );
 
 };
 
 YomboServer.TheServer.prototype.joinClientToRoom = function( client, room ) {
 
-	client.socket.join( room.internalName );
-	if ( room.clients.indexOf( client ) < 0 ) {
-		room.clients.push( client );
-	}
+    client.socket.join( room.internalName );
+    if ( room.clients.indexOf( client ) < 0 ) {
+        room.clients.push( client );
+    }
 
 };
 
 YomboServer.TheServer.prototype.removeClientFromRoom = function( client, room ) {
 
-	client.socket.leave( room.internalName );
-	var index = room.clients.indexOf( client );
-	if ( index >= 0 ) {
-		room.clients.splice( index, 1 );
-	}
+    client.socket.leave( room.internalName );
+    var index = room.clients.indexOf( client );
+    if ( index >= 0 ) {
+        room.clients.splice( index, 1 );
+    }
 
 };
 
 YomboServer.TheServer.prototype.emitToRoom = function( room, name, message ) {
 
-	io.to( room.internalName ).emit( name, message );
+    io.to( room.internalName ).emit( name, message );
 
 };
 
@@ -854,15 +854,15 @@ YomboServer.TheServer.prototype.emitToRoom = function( room, name, message ) {
 
 YomboServer.TheServer.prototype.isLocalClient = function( client ) {
 
-	return this.LOCAL_HOST_V4 === client.socket.handshake.address ||
-		   this.LOCAL_HOST_V6 === client.socket.handshake.address;
+    return this.LOCAL_HOST_V4 === client.socket.handshake.address ||
+        this.LOCAL_HOST_V6 === client.socket.handshake.address;
 
 };
 
 YomboServer.TheServer.prototype.isLocalRequest = function( req ) {
 
-	return this.LOCAL_HOST_V4 === req.connection.remoteAddress ||
-		   this.LOCAL_HOST_V6 === req.connection.remoteAddress;
+    return this.LOCAL_HOST_V4 === req.connection.remoteAddress ||
+        this.LOCAL_HOST_V6 === req.connection.remoteAddress;
 
 };
 
@@ -870,138 +870,138 @@ YomboServer.TheServer.prototype.isLocalRequest = function( req ) {
 
 YomboServer.TheServer.prototype.mapFile = function( path ) {
 
-	var index = this.servedRoutes.indexOf( path );
+    var index = this.servedRoutes.indexOf( path );
 
-	if ( index < 0 ) {
+    if ( index < 0 ) {
 
-		this.servedRoutes.push( path );
+        this.servedRoutes.push( path );
 
-		this.app.get( path, function( req, res ) {
+        this.app.get( path, function( req, res ) {
 
-			res.sendFile( __dirname + path );
+            res.sendFile( __dirname + path );
 
-		} );
+        } );
 
-	}
+    }
 
 };
 
 YomboServer.TheServer.prototype.mapDirectory = function( path ) {
 
-	var index = this.servedRoutes.indexOf( path );
+    var index = this.servedRoutes.indexOf( path );
 
-	if ( index < 0 ) {
+    if ( index < 0 ) {
 
-		this.servedRoutes.push( path );
+        this.servedRoutes.push( path );
 
-		this.app.use( path, this.express.static( __dirname + path ) );
+        this.app.use( path, this.express.static( __dirname + path ) );
 
-	}
+    }
 
 };
 
 YomboServer.TheServer.prototype.mapFileArray = function() {
 
-	for ( var i = 0, il = pathArray.length; i < il; i++ ) {
+    for ( var i = 0, il = pathArray.length; i < il; i ++ ) {
 
-		this.mapFile( pathArray[ i ] );
+        this.mapFile( pathArray[ i ] );
 
-	}
+    }
 
 };
 
 YomboServer.TheServer.prototype.mapDirectoryWithToken = function( path, pathPreamble, tokenArray ) {
-    
+
     // The token must be the first parameter of the request
 
-	var index = this.servedRoutes.indexOf( path );
+    var index = this.servedRoutes.indexOf( path );
 
-	if ( index < 0 ) {
+    if ( index < 0 ) {
 
-		this.servedRoutes.push( path );
+        this.servedRoutes.push( path );
 
-		this.app.use( path, function( req, res, next ) {
+        this.app.use( path, function( req, res, next ) {
 
-                    var reqToken = req.query.token;
-                    if ( reqToken ) {
-                        var originalUrl = req.originalUrl;
-                        var index = originalUrl.indexOf( "?" );
-                        if ( index >= 0 ) {
-                            console.log( "CONEXION: token = " + reqToken );
-                          if ( reqToken in tokenArray ) {
-                                res.sendFile( __dirname + pathPreamble + originalUrl.substring( 0, index ) );
-                          }
-                        }
+            var reqToken = req.query.token;
+            if ( reqToken ) {
+                var originalUrl = req.originalUrl;
+                var index = originalUrl.indexOf( "?" );
+                if ( index >= 0 ) {
+                    console.log( "CONEXION: token = " + reqToken );
+                    if ( reqToken in tokenArray ) {
+                        res.sendFile( __dirname + pathPreamble + originalUrl.substring( 0, index ) );
                     }
-		} );
-	}
+                }
+            }
+        } );
+    }
 };
 
 YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, message ) {
 
-	for ( var i = 0, il = array.length; i < il; i++ ) {
+    for ( var i = 0, il = array.length; i < il; i ++ ) {
 
-		array[ i ].socket.emit( name, message );
+        array[ i ].socket.emit( name, message );
 
-	}
+    }
 
 };
 
 YomboServer.TheServer.prototype.removeClient = function( client ) {
 
-	client.socket.client.disconnect();
+    client.socket.client.disconnect();
 
 };
 
 YomboServer.TheServer.prototype.getClientParameters = function( client ) {
-	return this.getURLParameters( this.getClientReferer( client ) );
+    return this.getURLParameters( this.getClientReferer( client ) );
 }
 
 YomboServer.TheServer.prototype.getClientReferer = function( client ) {
 
-	return client.socket.client.request.headers.referer;
-	
+    return client.socket.client.request.headers.referer;
+
 };
 
 YomboServer.TheServer.prototype.getURLParameters = function( url ) {
 
-	var params = [];
+    var params = [];
 
-	var url = decodeURI( url );
+    var url = decodeURI( url );
 
-	var index = url.indexOf( "?" );
-	if ( index >= 0 ) {
-		var paramString = url.substring( index + 1 );
-		var paramStringArray = paramString.split( "&" );
-		for ( var i = 0; i < paramStringArray.length; i++ ) {
-			var p = paramStringArray[ i ];
-			var index2 = p.indexOf( "=" );
-			if ( index2 >= 0 ) {
-				params.push( {
-					name: p.substring( 0, index2 ),
-					value: p.substring( index2 + 1 )
-				} );
-			}
-		}
+    var index = url.indexOf( "?" );
+    if ( index >= 0 ) {
+        var paramString = url.substring( index + 1 );
+        var paramStringArray = paramString.split( "&" );
+        for ( var i = 0; i < paramStringArray.length; i ++ ) {
+            var p = paramStringArray[ i ];
+            var index2 = p.indexOf( "=" );
+            if ( index2 >= 0 ) {
+                params.push( {
+                    name: p.substring( 0, index2 ),
+                    value: p.substring( index2 + 1 )
+                } );
+            }
+        }
 
-	}
+    }
 
-	return params;
+    return params;
 
 };
 
 YomboServer.TheServer.prototype.gethostURL = function( path ) {
 
-	if ( this.config.host !== "" ) {
-	
-		return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
+    if ( this.config.host !== "" ) {
 
-	}
-	else {
+        return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
 
-		return "/" + path;
+    }
+    else {
 
-	}
+        return "/" + path;
+
+    }
 
 };
 
@@ -1010,166 +1010,166 @@ YomboServer.TheServer.prototype.gethostURL = function( path ) {
 
 YomboServer.TheServer.prototype.registerListener = function( module, functionName, listenerFunction ) {
 
-	var listeners = this.listeners[ functionName ];
-	
-	if ( ! listeners ) {
+    var listeners = this.listeners[ functionName ];
 
-		this.logError( "Couldn't register module listener of unknown function name: " + functionName, "YomboServer.registerListener", module.name, module.instanceName );
-		return;
+    if ( ! listeners ) {
 
-	}
+        this.logError( "Couldn't register module listener of unknown function name: " + functionName, "YomboServer.registerListener", module.name, module.instanceName );
+        return;
 
-	module.listenersObject[ functionName ] = listenerFunction;
+    }
 
-	listeners.push( module );
+    module.listenersObject[ functionName ] = listenerFunction;
+
+    listeners.push( module );
 
 };
 
 YomboServer.TheServer.prototype.unregisterListener = function( module ) {
 
-	var found = false;
+    var found = false;
 
-	for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i++ ) {
+    for ( var i = 0, il = this.listenerFunctionNames.length; i < il; i ++ ) {
 
-		var listeners = this.listeners[ this.listenerFunctionNames[ i ] ];
+        var listeners = this.listeners[ this.listenerFunctionNames[ i ] ];
 
-		var index = listeners.indexOf( module );
+        var index = listeners.indexOf( module );
 
-		if ( index >= 0 ) {
+        if ( index >= 0 ) {
 
-			found = true;
+            found = true;
 
-			listeners.splice( index, 1 );
+            listeners.splice( index, 1 );
 
-		}
+        }
 
-	}
+    }
 
-	module.listenersObject = {};
+    module.listenersObject = { };
 
 };
 
 YomboServer.TheServer.prototype.talkToListeners = function( functionName, params ) {
 
-	var listeners = this.listeners[ functionName ];
+    var listeners = this.listeners[ functionName ];
 
-	if ( ! listeners ) {
+    if ( ! listeners ) {
 
-		this.logError( "functionName not found: " + functionName, "YomboServer.talkToListeners" );
+        this.logError( "functionName not found: " + functionName, "YomboServer.talkToListeners" );
 
-	}
+    }
 
-	for ( var i = 0, il = listeners.length; i < il; i++ ) {
+    for ( var i = 0, il = listeners.length; i < il; i ++ ) {
 
-		listeners[ i ].listenersObject[ functionName ]( params );
+        listeners[ i ].listenersObject[ functionName ]( params );
 
-	}
-	
+    }
+
 };
 
 // ***** Main client connection function *****
 
 YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
-	// In addition to these members, clients will have objects named after the modules they connect to
-	var client = {
+    // In addition to these members, clients will have objects named after the modules they connect to
+    var client = {
 
-		isGod: false,
-		socket: socket,
-		connectedModules: [],
-		events: []
+        isGod: false,
+        socket: socket,
+        connectedModules: [],
+        events: []
 
-	};
+    };
 
-	client.isGod = this.isLocalClient( client );
+    client.isGod = this.isLocalClient( client );
 
-	this.clients.push( client );
+    this.clients.push( client );
 
-	this.talkToListeners( "clientConnected", client );
+    this.talkToListeners( "clientConnected", client );
 
-	var scope = this;
+    var scope = this;
 
-	socket.on( "disconnect", function( msg ) {
+    socket.on( "disconnect", function( msg ) {
 
-		scope.logInfo( "Client disconnected: " + socket.id, "YomboServer.clientConnection" );
+        scope.logInfo( "Client disconnected: " + socket.id, "YomboServer.clientConnection" );
 
-		for ( var i = 0, il = client.connectedModules.length; i < il; i++ ) {
+        for ( var i = 0, il = client.connectedModules.length; i < il; i ++ ) {
 
-			var module = client.connectedModules[ i ];
+            var module = client.connectedModules[ i ];
 
-			var indexModule = module.clients.indexOf( client );
-			if ( indexModule >= 0 ) {
+            var indexModule = module.clients.indexOf( client );
+            if ( indexModule >= 0 ) {
 
-				module.clients.splice( indexModule, 1 );
+                module.clients.splice( indexModule, 1 );
 
-			}
+            }
 
-			module.clientDisconnection( client );
+            module.clientDisconnection( client );
 
-			scope.talkToListeners( "clientDisconnectedFromModule", { client: client, module: module } );
-		}
+            scope.talkToListeners( "clientDisconnectedFromModule", { client: client, module: module } );
+        }
 
-		var index = scope.clients.indexOf( client );
+        var index = scope.clients.indexOf( client );
 
-		if ( index >= 0 ) {
+        if ( index >= 0 ) {
 
-			scope.clients.splice( index, 1 );
+            scope.clients.splice( index, 1 );
 
-		}
+        }
 
-		scope.talkToListeners( "clientDisconnected", client );
+        scope.talkToListeners( "clientDisconnected", client );
 
-	} );
+    } );
 
-	socket.on( "ysConnectToModule", function( msg ) {
+    socket.on( "ysConnectToModule", function( msg ) {
 
-		var moduleName = msg.moduleName;
-		var instanceName = msg.instanceName;
+        var moduleName = msg.moduleName;
+        var instanceName = msg.instanceName;
 
-		var module = null;
+        var module = null;
 
-		if ( instanceName ) {
+        if ( instanceName ) {
 
-			module = scope.searchByValue( scope.modules, "instanceName", instanceName );
+            module = scope.searchByValue( scope.modules, "instanceName", instanceName );
 
-		}
+        }
 
-		if ( module === null ) {
+        if ( module === null ) {
 
-			// Find first instance
+            // Find first instance
 
-			module = scope.searchByValue( scope.modules, "name", moduleName );
+            module = scope.searchByValue( scope.modules, "name", moduleName );
 
-		}
+        }
 
-		if ( module !== null ) {
+        if ( module !== null ) {
 
-			var index = client.connectedModules.indexOf( module );
+            var index = client.connectedModules.indexOf( module );
 
-			if ( index < 0 ) {
+            if ( index < 0 ) {
 
-				if ( module.clientConnection( client ) ) {
+                if ( module.clientConnection( client ) ) {
 
-					client.connectedModules.push( module );
+                    client.connectedModules.push( module );
 
-					if ( module.clients.indexOf( client ) < 0 ) {
+                    if ( module.clients.indexOf( client ) < 0 ) {
 
-						module.clients.push( client );
+                        module.clients.push( client );
 
-					}
+                    }
 
-					scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
+                    scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
 
-					socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
+                    socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
 
-				}
-				
-			}
+                }
 
-		}
+            }
 
-	} );
+        }
 
-	this.logInfo( "Client connected: " + socket.id, "YomboServer.clientConnection" );
+    } );
+
+    this.logInfo( "Client connected: " + socket.id, "YomboServer.clientConnection" );
 
 };

@@ -4,34 +4,34 @@
 // Wait for gui library to load and then init application
 sap.ui.getCore().attachInit( function() {
 
-	init();
+    init();
 
 } );
 
 function init() {
 
-	function goToRoom( roomName ) {
-		if ( roomName ) {
-			//alert( "Room: " + roomName );
-			location.href= "/public/modules/sharedboard/sharedboard.html?room=" + encodeURIComponent( roomName );
-		}
-		else {
-			alert( "Please enter a room name" );
-		}
-	}
+    function goToRoom( roomName ) {
+        if ( roomName ) {
+            //alert( "Room: " + roomName );
+            location.href = "/public/modules/sharedboard/sharedboard.html?room=" + encodeURIComponent( roomName );
+        }
+        else {
+            alert( "Please enter a room name" );
+        }
+    }
 
-	// Create UI
+    // Create UI
 
-	// Text size text edit field
+    // Text size text edit field
 
-	var roomNameTextField = new sap.ui.commons.TextField();
-	roomNameTextField.attachChange( function( oControlEvent ) {
+    var roomNameTextField = new sap.ui.commons.TextField();
+    roomNameTextField.attachChange( function( oControlEvent ) {
 
-		goToRoom( roomNameTextField.getValue() );
+        goToRoom( roomNameTextField.getValue() );
 
-	} );
-	roomNameTextField.setWidth( "270px" );
-	roomNameTextField.setValue( "" );
+    } );
+    roomNameTextField.setWidth( "270px" );
+    roomNameTextField.setValue( "" );
     var roomNameEdit = new sap.ui.layout.HorizontalLayout( {
         content: [
             new sap.ui.commons.TextView( { text: "Room name: " } ),
@@ -39,36 +39,36 @@ function init() {
         ]
     } );
 
-	var dialogPanelContent = new sap.ui.layout.VerticalLayout( "thePanelContent", {
-		content: [
-			roomNameEdit
-		]
-	} );
+    var dialogPanelContent = new sap.ui.layout.VerticalLayout( "thePanelContent", {
+        content: [
+            roomNameEdit
+        ]
+    } );
 
-	var dialog = new sap.ui.commons.Dialog();
+    var dialog = new sap.ui.commons.Dialog();
 
-	dialog.setWidth( "370px" );
+    dialog.setWidth( "370px" );
     dialog.setHeight( "170px" );
     dialog.addStyleClass( "unselectable" );
     dialog.setKeepInWindow( true );
 
     dialog.attachClosed( function() {
-		dialog.close();
+        dialog.close();
     } );
 
-	dialog.setTitle( "Enter a room name to join in" );
+    dialog.setTitle( "Enter a room name to join in" );
 
-	dialog.addContent( dialogPanelContent );
+    dialog.addContent( dialogPanelContent );
 
-	dialog.addButton( new sap.ui.commons.Button( {
+    dialog.addButton( new sap.ui.commons.Button( {
         text: "Enter",
         press: function() {
-			goToRoom( roomNameTextField.getValue() );
-		}
+            goToRoom( roomNameTextField.getValue() );
+        }
     } ) );
 
-	dialog.setInitialFocus( roomNameTextField );
+    dialog.setInitialFocus( roomNameTextField );
 
-	dialog.open();
-	
+    dialog.open();
+
 }

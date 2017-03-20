@@ -3,40 +3,40 @@ var selfEasyrtcid = "";
 
 function init() {
 
-	easyrtc.setAcceptChecker( function( easyrtcid, callback ) {
+    easyrtc.setAcceptChecker( function( easyrtcid, callback ) {
 
-		console.log( "A viewer connected." );
+        console.log( "A viewer connected." );
 
-		// Accept all calls
-		callback( true );
+        // Accept all calls
+        callback( true );
 
-	} );
+    } );
 
-	easyrtc.setOnError( function( errEvent ) {
+    easyrtc.setOnError( function( errEvent ) {
 
-		console.log( "Error: " + errEvent.errorCode + ", " + errEvent.errorText );
+        console.log( "Error: " + errEvent.errorCode + ", " + errEvent.errorText );
 
-	} );
+    } );
 
 
-	// TODO unhardcode
-	easyrtc.enableAudio( true );
-	easyrtc.enableVideo( true );
-	easyrtc.enableDataChannels( false );
+    // TODO unhardcode
+    easyrtc.enableAudio( true );
+    easyrtc.enableVideo( true );
+    easyrtc.enableDataChannels( false );
 
     easyrtc.initMediaSource( function() {
 
-		var selfVideo = document.getElementById( "localVideo" );
-		easyrtc.setVideoObjectSrc( selfVideo, easyrtc.getLocalStream() );
-		selfVideo.muted = true;
-              
-		easyrtc.connect( "Yomboserver", loginSuccess, loginFailure);
+        var selfVideo = document.getElementById( "localVideo" );
+        easyrtc.setVideoObjectSrc( selfVideo, easyrtc.getLocalStream() );
+        selfVideo.muted = true;
 
-	}, function( errmesg ) {
+        easyrtc.connect( "Yomboserver", loginSuccess, loginFailure );
 
-		alert( "Error obtaining media source: " + errmesg );
+    }, function( errmesg ) {
 
-	} );
+        alert( "Error obtaining media source: " + errmesg );
+
+    } );
 
 
 
@@ -46,7 +46,7 @@ function loginSuccess( easyrtcid ) {
 
     selfEasyrtcid = easyrtcid;
 
-	console.log( "Logged in." );
+    console.log( "Logged in." );
 
 }
 
