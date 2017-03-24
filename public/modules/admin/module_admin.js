@@ -117,7 +117,7 @@ admin.admin.prototype.stop = function( onStop ) {
 
 };
 
-admin.admin.prototype.clientConnection = function( client ) {
+admin.admin.prototype.clientConnection = function( client, msg ) {
 
     if ( ! client.isGod ) {
 
@@ -125,7 +125,7 @@ admin.admin.prototype.clientConnection = function( client ) {
 
     }
 
-    var msg = {
+    var allDataMsg = {
         modules: [],
         launchConfigurations: [],
         totalNumberOfClients: this.yomboServer.clients.length
@@ -133,7 +133,7 @@ admin.admin.prototype.clientConnection = function( client ) {
     var modules = this.yomboServer.modules;
     for ( var i = 0, il = modules.length; i < il; i ++ ) {
         var module = modules[ i ];
-        msg.modules[ i ] = {
+        allDataMsg.modules[ i ] = {
             name: module.name,
             instanceName: module.instanceName,
             numberOfClients: module.clients.length
@@ -142,7 +142,7 @@ admin.admin.prototype.clientConnection = function( client ) {
     var launchConfigs = this.yomboServer.config.launchConfigurations;
     for ( var i = 0, il = launchConfigs.length; i < il; i ++ ) {
         var launchConfig = launchConfigs[ i ];
-        msg.launchConfigurations[ i ] = {
+        allDataMsg.launchConfigurations[ i ] = {
             name: launchConfig.name,
             instanceName: launchConfig.instanceName
         };
@@ -197,7 +197,7 @@ admin.admin.prototype.clientConnection = function( client ) {
     } );
 
 
-    client.socket.emit( "ysAdminAllData", msg );
+    client.socket.emit( "ysAdminAllData", allDataMsg );
 
     return true;
 

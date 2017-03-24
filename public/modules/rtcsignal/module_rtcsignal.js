@@ -126,7 +126,7 @@ rtcsignal.rtcsignal.prototype.stop = function( onStop ) {
 
 };
 
-rtcsignal.rtcsignal.prototype.clientConnection = function( client ) {
+rtcsignal.rtcsignal.prototype.clientConnection = function( client, msg ) {
 
     return true;
 

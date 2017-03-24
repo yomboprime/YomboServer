@@ -22,7 +22,7 @@ if ( typeof module !== 'undefined' ) {
 
 maps.maps = function() {
 
-    // Nothing to do
+    this.allowedClients = [];
 
 };
 
@@ -34,33 +34,14 @@ maps.maps.prototype = {
 
 maps.maps.prototype.start = function( onStart ) {
 
-    /*
-     this.theRoom = this.yomboServer.createRoom( this, "gm" + this.instanceName );
-     if ( this.theRoom === null ) {
-     errorMessage = "Error: room already exists";
-     }
-     
-     var scopeModule = this;
-     
-     if ( errorMessage ) {
-     setImmediate( function() {
-     scopeModule.yomboServer.stopModule( scopeModule, function() {
-     scopeModule.yomboServer.logError( errorMessage, "games.start", scopeModule.name, scopeModule.instanceName );
-     } );
-     } );
-     
-     }
-     else {
-     */
-    // Init module data
+    this.yomboServer.mapDirectory( "/public/lib/leaflet" );
 
+    this.yomboServer.mapFile( "/public/modules/maps/testMap.html" );
+    this.yomboServer.mapFile( "/public/modules/maps/main_testMap.js" );
 
-    this.yomboServer.mapDirectoryWithToken( "/tiles/", "../../private/yomboserver", this.tokensRaw );
+    this.yomboServer.mapDirectory( "/tiles/", this.config.tilesPath );
 
-//todo obtener tokens de todos los modulos de un fichero json obtenido de la ruta privada configurada en la config normal
-//esa ruta es "../../private/yomboserver", a la que se agrega "/privateConfig.json"
-//las private config pueden ir por launch y por instancia, y se agregan como privateConfig en la config de cada modulo
-    //this.clientEvents.push( "gmInput" );
+    this.clientEvents.push( "mapsGetTagList" );
 
     if ( onStart ) {
 
@@ -80,22 +61,31 @@ maps.maps.prototype.stop = function( onStop ) {
 
 };
 
-maps.maps.prototype.clientConnection = function( client ) {
+maps.maps.prototype.clientConnection = function( client, msg ) {
 
+/*
+    if ( ! msg.token || ! msg.token in this.config.privateConfig.tokens ) {
+        return false;
+    }
+*/
     client.map = {
-        token: null
+        token: msg.token
     };
-
-    // Insert client into the room
-    //this.yomboServer.joinClientToRoom( client, this.theRoom );
-
+/*
+    // Add client id to allowed clients
+    if ( this.allowedClients.indexOf( client. < 0 ) ) {
+        this.allowedClients.push( )
+    }
+*/
     var scopeModule = this;
 
-//	client.socket.on( "mapXXX", function( inputData ) {
-
-
-//	} );
-
+    socket.on( "mapsGetTagList", function( msg ) {
+        
+        if ( scope.config.pbfServiceEnabled ) {
+            // TODO...
+        }
+        
+    } );
     return true;
 
 };

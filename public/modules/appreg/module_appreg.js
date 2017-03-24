@@ -66,7 +66,7 @@ appreg.appreg.prototype.stop = function( onStop ) {
 
 };
 
-appreg.appreg.prototype.clientConnection = function( client ) {
+appreg.appreg.prototype.clientConnection = function( client, msg ) {
 
     client.socket.emit( "ysAppReg", this.getApplicationsMessage() );
 

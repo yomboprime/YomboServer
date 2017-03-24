@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Test Maps application</title>
+        <meta charset="UTF-8">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+	<style>
+	    body {
+		background-color: black;
+                padding: 0;
+                margin: 0;
+	    }
+            html, body, #mapCanvas, .mainPanel {
+                height: 100%;
+                width: 100%;
+            }
+            .sidePanel {
+		height: 100vh;
+		margin: 0;
+	    }
+        </style>
+        
+        <link rel="stylesheet" type="text/css" href="/public/lib/w2ui/w2ui-1.5.rc1.min.css" />
+	<script src="/public/lib/w2ui/jquery-2.1.4.min.js"></script>
+	<script src="/public/lib/w2ui/w2ui-1.5.rc1.js"></script>
+
+        <script src="/socket.io/socket.io.js"></script>
+        
+        <link rel="stylesheet" href="/public/lib/leaflet/leaflet.css" />
+        <script src="/public/lib/leaflet/leaflet.js"></script>
+        
+        <link rel="stylesheet" href="/public/lib/leaflet/plugins/brunob-leaflet.fullscreen-7716a2f/Control.FullScreen.css" />
+        <script src="/public/lib/leaflet/plugins/brunob-leaflet.fullscreen-7716a2f/Control.FullScreen.js"></script>
+
+    </head>
+
+    <body>
+        
+        <div id="mapCanvas"></div>
+
+        <div class="mainPanel" id="mainPanel1"></div>
+
+        <script src="main_testMap.js"></script>
+
+    </body>
+</html>

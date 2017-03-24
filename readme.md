@@ -83,6 +83,16 @@ Client --> Module:
 
  - `"gmInput"`
 
+### maps module
+
+Module --> Client:
+
+ - `"mapsTagList"`
+
+Client --> Module:
+
+ - `"mapsGetTagList"`
+
 -------------------------------------------------------
 
 
@@ -116,6 +126,19 @@ webrtc module:
 
    - Aplicacion multicliente: los emisores de video se han de registrar. los receptores de video primero reciben lista de transmisores registrados y luego se conectan a rtc.
 Si se registra un emisor y ya hay clientes en esa room, el servidor envia un mensaje a los clientes, que automaticamente les hace reiniciar (recargar la pagina)
+
+
+## TODO
+
+
+    todo obtener tokens de todos los modulos de un fichero json obtenido de la ruta privada configurada en la config normal
+    esa ruta es "../../private/yomboserver", a la que se agrega "/privateConfig.json"
+    las private config pueden ir por launch y por instancia, y se agregan como privateConfig en la config de cada modulo
+
+
+
+
+
 
 
 ## IDEAS
@@ -164,4 +187,3 @@ N cameras (emitters) to M clients (receivers), desktop/mobile/wathever
 
 
 
-------------

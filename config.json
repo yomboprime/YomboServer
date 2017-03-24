@@ -30,12 +30,16 @@
             "instanceName": "YomboMaps",
             "enabled": true,
             "config": {
+                "tilesPath": "/../tiles/",
+                "pbfServiceEnabled": true,
+                "pbfPath": "../pbf/mallorca.pbf",
+                "updatePBFEnabled": false
             }
         },
         {
             "name": "games",
             "instanceName": "SimpleWorldGame",
-            "enabled": true,
+            "enabled": false,
             "config": {
                 "gameName": "SimpleWorld",
                 "gameDescription": "A SimpleWorld game",
@@ -48,9 +52,10 @@
         {
             "name": "sharedboard",
             "instanceName": "thesharedboard",
-            "enabled": true,
+            "enabled": false,
             "config": {
-                "maxRooms": 5,
+                "maxRooms": 2,
+                "maxPlayersPerRoom": 5,
                 "commandStorageClean": 500
             }
         },
@@ -63,7 +68,7 @@
         },
         {
             "name": "camcap",
-            "instanceName": "camcap_vid0",
+            "instanceName": "camcap-vid0",
             "enabled": false,
             "config": {
                 "device": "/dev/video0",
@@ -81,7 +86,7 @@
         },
         {
             "name": "camcap",
-            "instanceName": "camcap_vid1",
+            "instanceName": "camcap-vid1",
             "enabled": false,
             "config": {
                 "device": "/dev/video1",

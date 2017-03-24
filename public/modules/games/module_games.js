@@ -51,7 +51,7 @@ games.games.prototype.start = function( onStart ) {
         }
     }
 
-    this.theRoom = this.yomboServer.createRoom( this, "gm" + this.instanceName );
+    this.theRoom = this.yomboServer.createRoom( this, "gm" + this.instanceName, this.config.maxPlayersPerRoom, false );
     if ( this.theRoom === null ) {
         errorMessage = "Error: room already exists";
     }
@@ -108,7 +108,7 @@ games.games.prototype.stop = function( onStop ) {
 
 };
 
-games.games.prototype.clientConnection = function( client ) {
+games.games.prototype.clientConnection = function( client, msg ) {
 
     client.gm = {
         playerId: this.nextPlayerId ++,
@@ -116,7 +116,9 @@ games.games.prototype.clientConnection = function( client ) {
     };
 
     // Insert client into the room
-    this.yomboServer.joinClientToRoom( client, this.theRoom );
+    if ( ! this.yomboServer.joinClientToRoom( client, this.theRoom ) ) {
+        return false;
+    }
 
     var gameCode = this.gameCode;
     var scopeModule = this;

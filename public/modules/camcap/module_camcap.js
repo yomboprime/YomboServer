@@ -127,7 +127,9 @@ camcap.camcap.prototype.stop = function( onStop ) {
 
 };
 
-camcap.camcap.prototype.clientConnection = function( client ) {
+camcap.camcap.prototype.clientConnection = function( client, msg ) {
+
+    // TODO max clients control!
 
     return true;
 

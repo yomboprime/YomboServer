@@ -71,14 +71,14 @@ sharedboard.sharedboard.prototype.stop = function( onStop ) {
 
 };
 
-sharedboard.sharedboard.prototype.clientConnection = function( client ) {
+sharedboard.sharedboard.prototype.clientConnection = function( client, msg ) {
 
     // Get the room name from client url parameter
     var params = this.yomboServer.getClientParameters( client );
     var roomName = this.yomboServer.searchByValue( params, "name", "room" );
     if ( ! roomName ) {
         client.socket.emit( "yssbError", "Please specify a room name with parameter, \"?room=<room_name>\"" );
-        return;
+        return false;
     }
     /*
      var index = referer.indexOf( "?room=" );
@@ -91,22 +91,25 @@ sharedboard.sharedboard.prototype.clientConnection = function( client ) {
 
     var room = this.yomboServer.findRoom( this, roomName.value );
     if ( room === null ) {
-        room = this.yomboServer.createRoom( this, roomName.value );
+        room = this.yomboServer.createRoom( this, roomName.value, this.config.maxPlayersPerRoom, false );
         if ( room === null ) {
             client.socket.emit( "yssbError", "Sorry, server is plenty of rooms. Please try again later." );
-            return;
+            return false;
         }
         room.sharedboard = {
             latestPaintCommands: [this.createEraseWhiteCommand()]
         };
     }
 
+    // Insert client into the room
+    if ( ! this.yomboServer.joinClientToRoom( client, room ) ) {
+        client.socket.emit( "yssbError", "Sorry, room is full. Please try again later." );
+        return false;
+    }
+
     client.sharedboard = {
         room: room
     };
-
-    // Insert client into the room
-    this.yomboServer.joinClientToRoom( client, room );
 
     var scope = this;
 

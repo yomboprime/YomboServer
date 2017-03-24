@@ -4,29 +4,12 @@
 
 if ( typeof module !== undefined ) {
     module.exports = {
-        getObjectSerializedAsString: getObjectSerializedAsString,
         copyObject: copyObject,
         iterateProperties: iterateProperties,
         extendObject: extendObject,
         isObject: isObject,
         isArray: isArray
     };
-}
-
-
-function getObjectSerializedAsString( objectJSON, beautified ) {
-
-    if ( beautified ) {
-
-        return JSON.stringify( objectJSON, null, 4 );
-
-    }
-    else {
-
-        return JSON.stringify( objectJSON );
-
-    }
-
 }
 
 function copyObject( objectToCopy ) {

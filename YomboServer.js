@@ -1,4 +1,7 @@
 
+var loadJSONFileSync = require( "./public/lib/fileUtils/fileUtils.js" ).loadJSONFileSync;
+var isNumeric = require( "./public/lib/mathUtils/mathUtils.js" ).isNumeric;
+
 var YomboServer = {
 
     VERSION_STRING: "r1",
@@ -121,16 +124,15 @@ YomboServer.TheServer.prototype.run = function() {
     } );
 
     // Start listening
-    var port = this.config.listenPort;
     var scope = this;
-    http.listen( port, function() {
+    http.listen( scope.config.listenPort, function() {
 
         // Start YomboServer modules
         scope.startModules();
 
         scope.inited = true;
 
-        scope.logSystem( "YomboServer inited and listening on port " + port );
+        scope.logSystem( "YomboServer inited and listening on port " + scope.config.listenPort );
 
     } );
 
@@ -422,8 +424,6 @@ YomboServer.TheServer.prototype.startModule = function( name, instanceName, conf
     module.rooms = [];
     module.clientEvents = [];
     module.listenersObject = { };
-    module.tokens = [];
-    module.tokensRaw = [];
 
     this.modules.push( module );
 
@@ -611,23 +611,8 @@ YomboServer.TheServer.prototype.getFunctionBody = function( theFunction ) {
 YomboServer.TheServer.prototype.loadConfig = function() {
 
     this.logSystem( "Loading config file in ./config.json", "YomboServer.loadConfig" );
-
-    var configFileContent = null;
-
-    try {
-        configFileContent = fs.readFileSync( "./config.json", "utf-8" );
-    }
-    catch ( e ) {
-        if ( e.code === 'ENOENT' ) {
-            this.logError( "Config file not found (path: ./config.json)", "YomboServer.loadConfig" );
-            return null;
-        }
-        else {
-            throw e;
-        }
-    }
-
-    var config = JSON.parse( configFileContent );
+    
+    var config = loadJSONFileSync( __dirname + "/config.json" );
 
     if ( ! config ) {
         this.logError( "Error while loading config file in ./config.json", "YomboServer.loadConfig" );
@@ -643,19 +628,13 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 
 YomboServer.TheServer.prototype.applyDefaultConfigValues = function( config ) {
 
-    if ( ! this.isNumeric( config.maxLogSize ) || ! Number.isInteger( config.maxLogSize ) || config.maxLogSize <= 0 ) {
+    if ( ! isNumeric( config.maxLogSize ) || ! Number.isInteger( config.maxLogSize ) || config.maxLogSize <= 0 ) {
         this.logWarning( "Config Warning: maxLogSize is not properly set. Setting default value." );
         config.maxLogSize = YomboServer.DEFAULT_MAX_LOG_SIZE;
     }
 
     this.maxLogSize = config.maxLogSize;
     this.logConsoleTypes = config.logConsoleTypes;
-
-};
-
-YomboServer.TheServer.prototype.isNumeric = function( n ) {
-
-    return ! isNaN( parseFloat( n ) ) && isFinite( n );
 
 };
 
@@ -672,6 +651,7 @@ YomboServer.TheServer.prototype.registerApplication = function( name, descriptio
             app.name = name;
             app.description = description;
             found = true;
+            break;
         }
     }
 
@@ -774,7 +754,7 @@ YomboServer.TheServer.prototype.getModuleMaxRooms = function( module ) {
 
 }
 
-YomboServer.TheServer.prototype.createRoom = function( module, roomName ) {
+YomboServer.TheServer.prototype.createRoom = function( module, roomName, maxClients ) {
 
     var room = this.findRoom( module, roomName );
     if ( room !== null ) {
@@ -790,7 +770,8 @@ YomboServer.TheServer.prototype.createRoom = function( module, roomName ) {
     room = {
         name: roomName,
         internalName: this.internalRoomName( module, roomName ),
-        clients: []
+        clients: [],
+        maxClients: maxClients
     };
 
     module.rooms.push( room );
@@ -827,16 +808,22 @@ YomboServer.TheServer.prototype.findRoom = function( module, roomName ) {
 
 YomboServer.TheServer.prototype.joinClientToRoom = function( client, room ) {
 
+    // TODO check max number of clients in a room
+
     client.socket.join( room.internalName );
+
     if ( room.clients.indexOf( client ) < 0 ) {
         room.clients.push( client );
     }
+    
+    return true;
 
 };
 
 YomboServer.TheServer.prototype.removeClientFromRoom = function( client, room ) {
 
     client.socket.leave( room.internalName );
+
     var index = room.clients.indexOf( client );
     if ( index >= 0 ) {
         room.clients.splice( index, 1 );
@@ -886,22 +873,24 @@ YomboServer.TheServer.prototype.mapFile = function( path ) {
 
 };
 
-YomboServer.TheServer.prototype.mapDirectory = function( path ) {
+YomboServer.TheServer.prototype.mapDirectory = function( webPath, path ) {
 
-    var index = this.servedRoutes.indexOf( path );
+    path = path || webPath;
+    
+    var index = this.servedRoutes.indexOf( webPath );
 
     if ( index < 0 ) {
 
-        this.servedRoutes.push( path );
+        this.servedRoutes.push( webPath );
 
-        this.app.use( path, this.express.static( __dirname + path ) );
+        this.app.use( webPath, this.express.static( __dirname + path ) );
 
     }
 
 };
 
 YomboServer.TheServer.prototype.mapFileArray = function() {
-
+    
     for ( var i = 0, il = pathArray.length; i < il; i ++ ) {
 
         this.mapFile( pathArray[ i ] );
@@ -912,6 +901,9 @@ YomboServer.TheServer.prototype.mapFileArray = function() {
 
 YomboServer.TheServer.prototype.mapDirectoryWithToken = function( path, pathPreamble, tokenArray ) {
 
+    // Obsolete.
+
+    /*
     // The token must be the first parameter of the request
 
     var index = this.servedRoutes.indexOf( path );
@@ -923,22 +915,21 @@ YomboServer.TheServer.prototype.mapDirectoryWithToken = function( path, pathPrea
         this.app.use( path, function( req, res, next ) {
 
             var reqToken = req.query.token;
-            if ( reqToken ) {
+//            if ( reqToken && reqToken in tokenArray ) {
                 var originalUrl = req.originalUrl;
                 var index = originalUrl.indexOf( "?" );
                 if ( index >= 0 ) {
-                    console.log( "CONEXION: token = " + reqToken );
-                    if ( reqToken in tokenArray ) {
-                        res.sendFile( __dirname + pathPreamble + originalUrl.substring( 0, index ) );
-                    }
+                    console.log( "CONNECTION: token = " + reqToken );
+                    res.sendFile( __dirname + pathPreamble + originalUrl.substring( 0, index ) );
                 }
-            }
+//            }
         } );
     }
+    */
 };
 
 YomboServer.TheServer.prototype.emitToClientsArray = function( array, name, message ) {
-
+    
     for ( var i = 0, il = array.length; i < il; i ++ ) {
 
         array[ i ].socket.emit( name, message );
@@ -991,7 +982,7 @@ YomboServer.TheServer.prototype.getURLParameters = function( url ) {
 };
 
 YomboServer.TheServer.prototype.gethostURL = function( path ) {
-
+    
     if ( this.config.host !== "" ) {
 
         return "http://" + this.config.host + ":" + this.config.listenPort + "/" + path;
@@ -1073,12 +1064,10 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
     // In addition to these members, clients will have objects named after the modules they connect to
     var client = {
-
         isGod: false,
         socket: socket,
         connectedModules: [],
         events: []
-
     };
 
     client.isGod = this.isLocalClient( client );
@@ -1148,7 +1137,7 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
             if ( index < 0 ) {
 
-                if ( module.clientConnection( client ) ) {
+                if ( module.clientConnection( client, msg ) ) {
 
                     client.connectedModules.push( module );
 
@@ -1163,6 +1152,8 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
                     socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
 
                 }
+                // TODO
+                // else ... disconnect/remove the client?
 
             }
 
