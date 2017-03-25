@@ -3,6 +3,8 @@
     "host": "",
 
     "listenPort": 12345,
+    
+    "connectionTimeout": 1000000,
 
     "maxLogSize": 500,
 

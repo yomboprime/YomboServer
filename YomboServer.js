@@ -187,6 +187,9 @@ YomboServer.TheServer.prototype.serveInternalServices = function() {
 
     // Serve favicons asset directory
     this.mapDirectory( '/public/assets/favicons' );
+    
+    // Serve generic icons
+    this.mapDirectory( "/public/assets/icons/generic" );
 
     var scope = this;
 
@@ -1077,6 +1080,8 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
     this.talkToListeners( "clientConnected", client );
 
     var scope = this;
+    
+    socket.heartbeatTimeout = this.config.connectionTimeout;
 
     socket.on( "disconnect", function( msg ) {
 

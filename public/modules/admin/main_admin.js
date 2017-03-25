@@ -307,16 +307,16 @@ function processLogEntry( logEntry ) {
     // Add html image icon to type field
     switch ( logEntry.type ) {
         case "Info":
-            logEntry.type = '<img src="/public/assets/icons/admin/info/info.png" height="16" width="16"> Info';
+            logEntry.type = '<img src="/public/assets/icons/generic/info/info.png" height="16" width="16"> Info';
             break;
         case "System":
             logEntry.type = '<img src="/favicon.png" height="16" width="16"> System';
             break;
         case "Warning":
-            logEntry.type = '<img src="/public/assets/icons/admin/warning/warning.png" height="16" width="16"> Warning';
+            logEntry.type = '<img src="/public/assets/icons/generic/warning/warning.png" height="16" width="16"> Warning';
             break;
         case "Error":
-            logEntry.type = '<img src="/public/assets/icons/admin/error//error.png" height="16" width="16"> Error';
+            logEntry.type = '<img src="/public/assets/icons/generic/error//error.png" height="16" width="16"> Error';
             break;
     }
 

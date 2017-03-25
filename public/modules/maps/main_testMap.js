@@ -13,15 +13,16 @@ var initialCenterLat = ( minLat + maxLat ) / 2;
 var initialZoom = 12;
 
 var map = null;
+var ui = null;
 var socket = null;
 
-init()
+init();
 
 function init() {
 
-    createMap();
+    map = createMap();
 
-    createUI();
+    ui = createUI();
 
     socket = io();
 
@@ -38,23 +39,25 @@ function init() {
 
     socket.on( "mapsTagList", function( msg ) {
         
-        
+        ui.receivedMapsTagList( msg );
         
     } );
     
     socket.emit( "ysConnectToModule", { moduleName: "maps" } );    
     
-    //socket.emit( "mapsGetTagList", {} );
-    
     //************ poner boton en tab de tags, deshabilitarlo al pulsarlo, y ocultarlo al recibir datos
 
 }
 
+function getMapsTagList() {
 
+    socket.emit( "mapsGetTagList", {} );
+
+}
 
 function createMap() {
     
-    map = L.map( "mapCanvas", {
+    var map = L.map( "mapCanvas", {
 
         fullscreenControl: true,
         fullscreenControlOptions: {
@@ -97,6 +100,7 @@ function createMap() {
     } );
     */
 
+    return map;
 }
 
 function createUI() {
@@ -109,7 +113,7 @@ function createUI() {
             { id: 'btnSelectDestination', text: 'Select destination', img: 'icon-page' }
         ],
         onClick: function (event) {
-            console.log( "click en sidebar: " + event.target);
+            //console.log( "click en sidebar: " + event.target);
         }
 
     };
@@ -117,13 +121,9 @@ function createUI() {
     var sideBarTagViewerConfig = {
         name  : 'sideBarTagViewer',
         img   : null,
-        nodes : [ 
-            { id: 'blevel-1-1', text: 'Level 1.1', img: 'icon-page' },
-            { id: 'blevel-1-2', text: 'Level 1.2', img: 'icon-page' },
-            { id: 'blevel-1-3', text: 'Level 1.3', img: 'icon-page' }
-        ],
+        nodes : [],
         onClick: function (event) {
-            console.log( "click en sidebar: " + event.target);
+            //console.log( "click en sidebar: " + event.target);
         }
 
     };
@@ -131,8 +131,40 @@ function createUI() {
     var mainLayout = null;
     var sideBarRoute = null;
     var sideBarTagViewer = null;
+    var layoutTagViewer = null;
 
     $(function () {
+
+        sideBarTagViewer = $().w2sidebar( sideBarTagViewerConfig );
+
+        layoutTagViewer = $().w2layout( {
+            name: 'layoutTagViewer',
+            padding: 0,
+            panels: [
+                { type: 'main', size: 250, minSize: 20, resizable: true,
+                    toolbar: {
+                        name : 'toolBarBtnMapsGetTagList',
+                        items: [
+                            { type: 'html',  id: 'iconMapsGetTagList',  html: '<img src="/public/assets/icons/generic/info/info.png" height="16" width="16">' },
+                            { type: 'button',  id: 'btnMapsGetTagList',  text: 'Get tag list',
+                                onClick: function( event ) {
+                                    var toolbar = w2ui.layoutTagViewer.panels[0].toolbar;
+                                    var icon = toolbar.items[ 0 ];
+                                    var btn = toolbar.items[ 1 ];
+                                    icon.html = '<img src="/public/assets/icons/generic/refresh/refresh.gif" height="32" width="32">';
+                                    btn.text = 'Obtaining tag list...';
+                                    toolbar.refresh();
+                                    toolbar.disable( btn.id );
+                                    getMapsTagList();
+                                }
+                            }
+                        ]
+                    },
+                }
+            ]
+        } );
+
+        w2ui.layoutTagViewer.content( 'main', sideBarTagViewer );
 
         mainLayout = $( '#mainPanel1' ).w2layout( {
             name: 'mainLayout',
@@ -142,8 +174,8 @@ function createUI() {
                     tabs: {
                         active: 'tab1',
                         tabs: [
-                            { id: 'tab1', caption: 'Tab 1' },
-                            { id: 'tab2', caption: 'Tab 2' }
+                            { id: 'tab1', caption: 'Routes' },
+                            { id: 'tab2', caption: 'Layer info' }
                         ],
                         onClick: function ( id, data ) {
                             var tabs = mainLayout.panels[ 0 ].tabs.tabs;
@@ -151,7 +183,7 @@ function createUI() {
                                 w2ui.mainLayout.content( 'left', sideBarRoute );
                             }
                             else if ( id === tabs[ 1 ].id ) {
-                                w2ui.mainLayout.content( 'left', sideBarTagViewer );
+                                w2ui.mainLayout.content( 'left', layoutTagViewer );
                             }
                         }
                     }
@@ -161,10 +193,71 @@ function createUI() {
         } );
 
         sideBarRoute = $().w2sidebar( sideBarRouteConfig );
-        sideBarTagViewer = $().w2sidebar( sideBarTagViewerConfig );
 
         w2ui.mainLayout.content( 'left', sideBarRoute );
 
     } );
+    
+    function receivedMapsTagList( tagsList ) {
+
+        // Hide toolbar icon
+        var toolbar = w2ui.layoutTagViewer.panels[0].toolbar;
+        var icon = toolbar.items[ 0 ];
+        var btn = toolbar.items[ 1 ];
+        icon.html = '<img src="/public/assets/icons/generic/ok/ok.png" height="32" width="32">';
+        btn.text = 'Tags received.';
+        toolbar.refresh();
+
+        var nodeId = 0;
+
+        // Process tags
+        function addTags( uiNodes, tagsObject, type ) {
+
+            var tagsNodes = [];
+
+            for ( var tag in tagsObject ) {
+                if ( tagsObject.hasOwnProperty( tag ) ) {
+                    var valuesNodes = [];
+                    var values = tagsObject[ tag ];
+                    for ( var i = 0; i < values.length; i++ ) {
+                        valuesNodes.push( { id: 'layoutTagViewer_nodeValue_' + nodeId++, text: "" + values[ i ].value + " (" + values[ i ].count + ")", img: 'icon-page', nodes: [] } );
+                    }
+                    tagsNodes.push( { id: 'layoutTagViewer_node_' + nodeId++, text: tag, img: 'icon-folder', nodes: valuesNodes } );
+                }
+            }
+
+            var typeNode = { id: 'layoutTagViewer_nodeType_' + nodeId++, text: type, img: 'icon-folder', nodes: tagsNodes };
+
+            uiNodes.push( typeNode );
+
+        }
+
+        $( function() {
+            
+            var uiNodes = [];
+            
+            addTags( uiNodes, tagsList.nodesTags, "Nodes" );
+            addTags( uiNodes, tagsList.waysTags, "Ways" );
+            
+            sideBarTagViewerConfig.nodes = uiNodes;
+
+            sideBarTagViewer.destroy();
+
+            sideBarTagViewer = $().w2sidebar( sideBarTagViewerConfig );
+            
+            w2ui.layoutTagViewer.content( 'main', sideBarTagViewer );
+
+            //sideBarTagViewer.refresh();
+        
+            //sideBarTagViewer.expandAll();
+        } );
+
+    }
+
+    var ui = {
+        receivedMapsTagList: receivedMapsTagList
+    };
+
+    return ui;
 
 }

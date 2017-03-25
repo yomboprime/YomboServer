@@ -1,0 +1,9 @@
+
+Description:
+	"Ok" animated icon
+
+License:
+	CC0 Public Domain 
+
+Obtained from:
+	Created by Juan Jose Luna Espinosa (yomboprime.github.com)
