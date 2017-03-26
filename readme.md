@@ -88,10 +88,14 @@ Client --> Module:
 Module --> Client:
 
  - `"mapsTagList"`
+ - `"mapsBookmarks"`
+- `"mapsPolylines"`
 
 Client --> Module:
 
  - `"mapsGetTagList"`
+ - `"mapsGetNodes"`
+ - `"mapsGetWays"`
 
 -------------------------------------------------------
 
