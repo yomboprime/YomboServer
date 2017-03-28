@@ -32,10 +32,19 @@
             "instanceName": "YomboMaps",
             "enabled": true,
             "config": {
-                "tilesPath": "/../tiles/",
+                "tilesPath": "/../maps/tiles/",
                 "pbfServiceEnabled": true,
-                "pbfPath": "../pbf/mallorca.pbf",
-                "updatePBFEnabled": false
+                "pbfPath": "../maps/pbf/mallorca.pbf",
+                "updatePBFEnabled": false,
+                "osrmServiceEnabled": true,
+                "osrmServerPort": 12346,
+                "osrmServerPath": "../../soft/osrm-backend/build/osrm-routed",
+                "osrmServerCWD": "../../soft/osrm-backend",
+                "osrmServerProfiles": {
+                    "car": "../maps/osrm_car/mallorca.osrm",
+                    "foot": "../maps/osrm_foot/mallorca.osrm"
+                },
+                "osrmServerAdditionalParameters": "-i 127.0.0.1 -t 1"
             }
         },
         {

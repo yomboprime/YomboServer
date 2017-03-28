@@ -88,8 +88,8 @@ Client --> Module:
 Module --> Client:
 
  - `"mapsTagList"`
- - `"mapsBookmarks"`
-- `"mapsPolylines"`
+ - `"mapsMarkers"`
+ - `"mapsPolylines"`
 
 Client --> Module:
 

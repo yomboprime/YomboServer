@@ -13,6 +13,19 @@ var initialCenterLat = ( minLat + maxLat ) / 2;
 var initialZoom = 12;
 
 var map = null;
+var mapLayerControl = null;
+var selectRouteState = "idle";
+
+// Router for general route
+var routingControlPrimary = null;
+// Router for secondary origin route
+var routingControlOrigin = null;
+// Router for secondary destination route
+var routingControlDestination = null;
+
+var originLatLon = null;
+var lastPlacedWasOrigin = null;
+
 var ui = null;
 var socket = null;
 
@@ -44,9 +57,15 @@ function init() {
     } );
     
     
-    socket.on( "mapsBookmarks", function( msg ) {
+    socket.on( "mapsMarkers", function( msg ) {
         
         placeBookmarksInMap( msg, ui.getNodesCallback );
+
+    } );
+    
+    socket.on( "mapsPolylines", function( msg ) {
+        
+        placePolylinesInMap( msg, ui.getNodesCallback );
 
     } );
 
@@ -63,7 +82,9 @@ function getMapsTagList() {
 }
 
 function createMap() {
-    
+
+    // Create the map
+        
     var map = L.map( "mapCanvas", {
 
         fullscreenControl: true,
@@ -73,7 +94,8 @@ function createMap() {
 
     } ).setView( [ initialCenterLat, initialCenterLon ], initialZoom );
 
-    // Create the map
+    // Tiles
+
     L.tileLayer( "/tiles/{z}/{x}/{y}.png?", {
 
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -81,11 +103,21 @@ function createMap() {
 
     } ).addTo( map );
 
-    /*
-    L.marker( [ initialCenterLat, initialCenterLon ] ).addTo( map )
-        .bindPopup('Hola mundoo!!!')
-        .openPopup();
-    */
+    // Interaction
+
+    map.on( 'click', function( event ) {
+        
+        var latLon = map.mouseEventToLatLng( event.originalEvent );
+        
+        if ( selectRouteState === 'origin' ) {
+            setRouteOrigin( latLon);
+        }
+        else if ( selectRouteState === 'destination' ) {
+            setRouteDestination( latLon );
+        }
+        
+    } );
+
     var circle = L.circle( [ initialCenterLat, initialCenterLon ], {
         color: 'green',
         fillColor: '#00a001',
@@ -95,35 +127,67 @@ function createMap() {
 
 
     // Routing
-    /*
-    var control = L.Routing.control( {
+
+    routingControlPrimary = L.Routing.control( {
+
+
         router: L.Routing.osrmv1( {
-            serviceUrl: "http://servidor_osrm/path",
+            serviceUrl: "http://127.0.0.1:12346/route/v1",
             timeout: 30000,
-            profile: "driving",
+            profile: "car",
             useHints: true
         } ),
+        waypoints: [],
+        routeWhileDragging: false,
+        fitSelectedRoutes: false
 
     } );
-    */
+
+    routingControlPrimary.on('routeselected', function(e) {
+
+        processPrimaryRoute( e.route );
+
+    } );
+
+
+    routingControlPrimary.addTo( map );
+
 
     return map;
 }
 
-function getNodes( tag, values ) {
+function addMapLayer( name, layer ) {
+    
+    var layerGroup = L.layerGroup( layer );
+    
+    if ( ! mapLayerControl ) {
+        
+        mapLayerControl = L.control.layers( null, null );
+            
+        mapLayerControl.addTo(map);
 
-    var sentValuesArray = null;
-    if ( values ) {
-        sentValuesArray = [];
-        var n = values.length;
-        for ( var i = 0; i < n; i++ ) {
-            sentValuesArray.push( values[ i ].value );
-        }
     }
+
+    mapLayerControl.addOverlay( layerGroup, name );
+    
+    layerGroup.addTo( map );
+
+}
+
+function getNodes( tag, value ) {
 
     socket.emit( "mapsGetNodes", {
         tag: tag,
-        values: sentValuesArray
+        value: value
+    } );
+
+}
+
+function getWays( tag, value ) {
+
+    socket.emit( "mapsGetWays", {
+        tag: tag,
+        value: value
     } );
 
 }
@@ -134,42 +198,119 @@ function placeBookmarksInMap( msg, callback ) {
         return;
     }
 
-    // msg.layerName
-    var bookmarks = msg.bookmarks;
-    var n = bookmarks.length;
+    var markers = msg.markers;
+    var n = markers.length;
+    var mapMarkers = [];
     for ( var i = 0; i < n; i++ ) {
-        var bm = bookmarks[ i ];
-        L.marker( [ bm.lat, bm.lon ] ).addTo( map );
+        var m = markers[ i ];
+        mapMarkers.push( L.marker( [ m.lat, m.lon ] ) );
         //.bindPopup('Hola mundoo!!!')
         //.openPopup();
     }
+    
+    addMapLayer( msg.layerName, mapMarkers );
     
     callback();
 
 }
 
-function getWays( tag, values ) {
+function placePolylinesInMap( msg, callback ) {
+    
+    //window.setTimeout( callback, 1200 );
 
-    var sentValuesArray = null;
-    if ( values ) {
-        sentValuesArray = [];
-        var n = values.length;
-        for ( var i = 0; i < n; i++ ) {
-            sentValuesArray.push( values[ i ].value );
+    var ways = msg.ways;
+    var nw = ways.length;
+    var mapPolylines = [];
+    for ( var i = 0; i < nw; i++ ) {
+        var w = ways[ i ];
+        
+        for ( var j = 0; j < w.points.length; j++ ) {
+            if ( !w.points[j] || ! w.points[j][0] || ! w.points[j][1] ) {
+                console.log( "ERROR en " + i + ", " + j );
+            }
+        }
+        
+        mapPolylines.push( L.polyline( w.points, { color: 'red', weight: 2 } ) );
+    }
+    
+    addMapLayer( msg.layerName, mapPolylines );
+    
+    callback();
+}
+
+function setRouteOrigin( latLon ) {
+
+    originLatLon = latLon;
+    
+    var wp = routingControlPrimary.getWaypoints();
+    
+    if ( wp.length >= 2 ) {
+
+        wp[ 0 ] = originLatLon;
+
+        routingControlPrimary.setWaypoints( wp );
+
+    }
+    else if ( wp.length === 1 ) {
+        if ( lastPlacedWasOrigin === true || lastPlacedWasOrigin === null ) {
+            wp[ 0 ] = latLon; 
+        }
+        else {
+            wp.unshift( originlatLon );
         }
     }
+    else {
+        // There are no waypoints yet
+        wp.push( originlatLon );
+    }
 
-    socket.emit( "mapsGetWays", {
-        tag: tag,
-        values: sentValuesArray
-    } );
+    routingControlPrimary.setWaypoints( wp );
+
+    lastPlacedWasOrigin = true;
 
 }
 
-function placePolylinesInMap( tag, values, callback ) {
+function setRouteDestination( latLon ) {
+
+    if ( ! originLatLon ) {
+        return;
+    }
+
+    var wp = routingControlPrimary.getWaypoints();
     
-    window.setTimeout( callback, 1200 );
+    if ( wp.length >= 2 ) {
+        originLatLon = wp[ 0 ];
+        wp[ wp.length - 1 ] = latLon; 
+    }
+    else if ( wp.length === 1 ) {
+        if ( lastPlacedWasOrigin === true || lastPlacedWasOrigin === null ) {
+            wp.push( latLon );
+        }
+        else {
+            wp[ 0 ] = latLon; 
+        }
+    }
+    else {
+        // There are no waypoints yet
+        wp.push( latLon );
+    }
+
+    routingControlPrimary.setWaypoints( wp );
+
+    lastPlacedWasOrigin = false;
+}
+
+function processPrimaryRoute( route ) {
     
+    if ( route.inputWaypoints.length !== 2 ) {
+        return;
+    }
+    
+    
+
+    // route.summary.totalDistance
+    // route.coordinates
+
 }
 
 function createUI() {
@@ -209,7 +350,12 @@ function createUI() {
             { id: 'btnSelectDestination', text: 'Select destination', img: 'icon-page' }
         ],
         onClick: function (event) {
-            //console.log( "click en sidebar: " + event.target);
+            if ( event.target === 'btnSelectOrigin' ) {
+                selectRouteState = 'origin';
+            }
+            else if ( event.target === 'btnSelectDestination' ) {
+                selectRouteState = 'destination';
+            }
         }
 
     };
@@ -284,19 +430,26 @@ function createUI() {
                         
                         // Place nodes in the map
                         
+                        if ( selectedItemContextMenu.mapsLayerName ) {
+                            w2alert( "You already loaded the markers on that tag" );
+                            return;
+                        }
+                        
+                        selectedItemContextMenu.mapsLayerName = selectedItemContextMenu.mapsTag;
+                        
                         if ( selectedItemContextMenu.mapsTagValues && selectedItemContextMenu.mapsTagValues.length > 0 ) {
                             if ( selectedItemContextMenu.mapsTotalValuesCount >= 15 ) {
                                 w2confirm( 'You are about to add ' + selectedItemContextMenu.mapsTotalValuesCount +
-                                           ' bookmarks on the map. Are you sure?', function ( answer ) {
+                                           ' markers on the map. Are you sure?', function ( answer ) {
                                     if ( answer === 'Yes' ) {
-                                        setToolbarState( 'REFRESH', 'Placing bookmarks...' );
-                                        getNodes( selectedItemContextMenu.mapsTag, null );
+                                        setToolbarState( 'REFRESH', 'Placing markers...' );
+                                        getNodes( selectedItemContextMenu.mapsTag );
                                     }
                                 } );
                             }
                             else {
-                                setToolbarState( 'REFRESH', 'Placing bookmarks...' );
-                                getNodes( selectedItemContextMenu.mapsTag, null );
+                                setToolbarState( 'REFRESH', 'Placing markers...' );
+                                getNodes( selectedItemContextMenu.mapsTag );
                             }
                         }
                         
@@ -304,6 +457,13 @@ function createUI() {
                     else if ( id.indexOf( "layoutTagViewer_node_Ways" ) === 0 ) {
                         
                         // Place ways in the map
+                        
+                        if ( selectedItemContextMenu.mapsLayerName ) {
+                            w2alert( "You already loaded the ways on that tag" );
+                            return;
+                        }
+
+                        selectedItemContextMenu.mapsLayerName = selectedItemContextMenu.mapsTag;
 
                         if ( selectedItemContextMenu.mapsTagValues && selectedItemContextMenu.mapsTagValues.length > 0 ) {
                             if ( selectedItemContextMenu.mapsTotalValuesCount >= 15 ) {
@@ -311,13 +471,13 @@ function createUI() {
                                            ' polylines on the map. Are you sure?', function ( answer ) {
                                     if ( answer === 'Yes' ) {
                                         setToolbarState( 'REFRESH', 'Placing polylines...' );
-                                        getWays( selectedItemContextMenu.mapsTag, null );
+                                        getWays( selectedItemContextMenu.mapsTag );
                                     }
                                 } );
                             }
                             else {
                                 setToolbarState( 'REFRESH', 'Placing polylines...' );
-                                getWays( selectedItemContextMenu.mapsTag, null );
+                                getWays( selectedItemContextMenu.mapsTag );
                             }
                         }
                     }
@@ -329,16 +489,16 @@ function createUI() {
                 
                 if ( selectedItemContextMenu.mapsValue.count >= 15 ) {
                     w2confirm( 'You are about to add ' + selectedItemContextMenu.mapsValue.count +
-                               ' bookmarks on the map. Are you sure?', function ( answer ) {
+                               ' markers on the map. Are you sure?', function ( answer ) {
                         if ( answer === 'Yes' ) {
-                            setToolbarState( 'REFRESH', 'Placing bookmarks...' );
-                            getNodes( selectedItemContextMenu.mapsTag, [ selectedItemContextMenu.mapsValue ] );
+                            setToolbarState( 'REFRESH', 'Placing markers...' );
+                            getNodes( selectedItemContextMenu.mapsTag, selectedItemContextMenu.mapsValue.value );
                         }
                     } );
                 }
                 else {
-                    setToolbarState( 'REFRESH', 'Placing bookmarks...' );
-                    getNodes( selectedItemContextMenu.mapsTag, [ selectedItemContextMenu.mapsValue ] );
+                    setToolbarState( 'REFRESH', 'Placing markers...' );
+                    getNodes( selectedItemContextMenu.mapsTag, selectedItemContextMenu.mapsValue.value );
                 }
             }
             else if ( id.indexOf( "layoutTagViewer_nodeValue_Ways" ) === 0 ) {
@@ -350,13 +510,13 @@ function createUI() {
                                ' polylines on the map. Are you sure?', function ( answer ) {
                         if ( answer === 'Yes' ) {
                             setToolbarState( 'REFRESH', 'Placing polylines...' );
-                            getWays( selectedItemContextMenu.mapsTag, [ selectedItemContextMenu.mapsValue ] );
+                            getWays( selectedItemContextMenu.mapsTag, selectedItemContextMenu.mapsValue.value );
                         }
                     } );
                 }
                 else {
                     setToolbarState( 'REFRESH', 'Placing polylines...' );
-                    getWays( selectedItemContextMenu.mapsTag, [ selectedItemContextMenu.mapsValue ] );
+                    getWays( selectedItemContextMenu.mapsTag, selectedItemContextMenu.mapsValue.value );
                 }
 
             }

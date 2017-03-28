@@ -16,7 +16,7 @@ if ( typeof module !== 'undefined' ) {
     };
 
 }
-
+//optimizar con un array o hash con todos los id de nodos requeridos, y si esta despues buscarlo en los ways
 // ***** Libraries *****
 
 
@@ -93,8 +93,8 @@ maps.maps.prototype.clientConnection = function( client, msg ) {
     
     client.socket.on( "mapsGetNodes", function( msg ) {
         
-        scopeModule.getNodes( msg, function( bookmarks ) {
-            client.socket.emit( "mapsBookmarks", bookmarks );
+        scopeModule.getNodes( msg, function( markers ) {
+            client.socket.emit( "mapsMarkers", markers );
         } );
 
     } );
@@ -303,7 +303,7 @@ maps.maps.prototype.getTags = function( callback ) {
 maps.maps.prototype.getNodes = function( msg, callback ) {
 
     var tag = msg.tag;
-    var values = msg.values;
+    var requestedValue = msg.value;
 
     function processNode( node ) {
         
@@ -313,14 +313,16 @@ maps.maps.prototype.getNodes = function( msg, callback ) {
             return;
         }
         
+        if ( ! tags.hasOwnProperty( tag ) ) {
+            return;
+        }
+
         var value = tags[ tag ];
-        if ( value !== undefined ) {
-            if ( ! values || values.indexOf( value ) >= 0 ) {
-                bookmarks.push( {
-                    lat: node.lat,
-                    lon: node.lon
-                } );
-            }
+        if ( requestedValue === undefined || requestedValue === value ) {
+            markers.push( {
+                lat: node.lat,
+                lon: node.lon
+            } );
         }
     }
 
@@ -328,7 +330,7 @@ maps.maps.prototype.getNodes = function( msg, callback ) {
         return null;
     }
 
-    var bookmarks = [];
+    var markers = [];
 
     var scopeModule = this;
 
@@ -343,7 +345,8 @@ maps.maps.prototype.getNodes = function( msg, callback ) {
             console.log( 'document end\n' );
 
             callback( {
-                bookmarks: bookmarks
+                layerName: "Nodes tagged " + tag + ( requestedValue !== undefined ? " = " + requestedValue : "" ),
+                markers: markers
             } );
 
         },
@@ -373,7 +376,175 @@ maps.maps.prototype.getNodes = function( msg, callback ) {
 
 maps.maps.prototype.getWays = function( msg, callback ) {
 
-    // TODO
-    callback( null );
+
+    var tag = msg.tag;
+    var requestedValue = msg.value;
+
+    function processWay( way ) {
+        
+        var tags = way.tags;
+
+        if ( ! tags ) {
+            return;
+        }
+        
+        if ( ! tags.hasOwnProperty( tag ) ) {
+            return;
+        }
+        
+        var value = tags[ tag ];
+        if ( requestedValue === undefined || requestedValue === value ) {
+            var points = [];
+            for ( var i = 0; i < way.nodeRefs.length; i++ ) {
+                points[ i ] = null;
+            }
+            ways.push( {
+                nodeRefs: way.nodeRefs,
+                points: points
+            } );
+        }
+    }
+
+
+    function processNode( node ) {
+        
+        var id = node.id;
+        
+        // Quick find if node id is of our interest
+        if ( allNodesList.indexOf( id ) < 0 ) {
+            return;
+        }
+        
+        var nw = ways.length;
+        for ( var i = 0; i < nw; i++ ) {
+            var w = ways[ i ];
+            var index = 0;
+            while ( index >= 0 ) {
+                index = w.nodeRefs.indexOf( id, index );
+                if ( index >= 0 ) {
+                    w.points[ index ] = [ node.lat, node.lon ];
+                    index++;
+                }
+            }
+        }
+    }
+
+    if ( ! this.config.pbfServiceEnabled ) {
+        return null;
+    }
+
+    var ways = [];
+    
+    var allNodesList = null;
+
+    var scopeModule = this;
+
+    console.log( 'starting nodes parsing...' );
+
+    // First process the ways...
+
+    osmread.parse( {
+
+        filePath: scopeModule.config.pbfPath,
+
+        endDocument: function(){
+
+            console.log( 'document end\n' );
+
+            // ... and then process the nodes that belong to the selected ways:
+            parseNodes();
+
+        },
+
+        bounds: function(bounds){
+            // Nothing to do here
+        },
+
+        node: function(way){
+            // Nothing to do here
+        },
+        
+        way: processWay,
+
+        relation: function(relation){
+            // Nothing to do here
+        },
+
+        error: function(msg){
+            console.log('************ pbf parse error: ' + msg);
+            callback( null );
+        }
+
+    } );
+
+    function parseNodes() {
+
+        // Store nodes from all ways in a single list to detect more rapidly
+        // if a given node id is to be added.
+        allNodesList = [];
+        var nw = ways.length;
+        for ( var i = 0; i < nw; i++ ) {
+            var w = ways[ i ];
+            var refs = w.nodeRefs;
+            var np = refs.length;
+            for ( var j = 0; j < np; j++ ) {
+                var r = refs[ j ];
+                if ( allNodesList.indexOf( r ) < 0 ) {
+                    allNodesList.push( r );
+                }
+            }
+        }
+
+        osmread.parse( {
+
+            filePath: scopeModule.config.pbfPath,
+
+            endDocument: function(){
+
+                console.log( 'document end\n' );
+                
+                var nw = ways.length;
+                for ( var i = 0; i < nw; i++ ) {
+                    var w = ways[ i ];
+                    w.nodeRefs = undefined;
+                    
+                    // Remove unreferenced nodes
+                    var points = w.points;
+                    var np = points.length;
+                    for ( var j = np - 1; j >= 0; j-- ) {
+                        if ( ! points[ j ] ) {
+                            points.splice( j, 1 );
+                        }
+                    }
+                }
+
+                callback( {
+                    layerName: "Ways tagged " + tag + ( requestedValue !== undefined ? " = " + requestedValue : "" ),
+                    ways: ways
+                } );
+
+            },
+
+            bounds: function(bounds){
+                // Nothing to do here
+            },
+
+            node: processNode,
+
+            way: function(way){
+                // Nothing to do here
+            },
+
+            relation: function(relation){
+                // Nothing to do here
+            },
+
+            error: function(msg){
+                console.log('************ pbf parse error: ' + msg);
+                callback( null );
+            }
+
+        } );
+    }
 
 };
