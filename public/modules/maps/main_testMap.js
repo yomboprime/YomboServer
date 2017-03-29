@@ -18,16 +18,27 @@ var selectRouteState = "idle";
 
 // Router for general route
 var routingControlPrimary = null;
-// Router for secondary origin route
-var routingControlOrigin = null;
-// Router for secondary destination route
-var routingControlDestination = null;
+// Router for foot walking
+var routingControlFoot = null;
+// Router for secondary car route
+var routingControlCar = null;
+
+var flagDontProcessFootRoute = false;
+var flagDontProcessCarRoute = false;
+var flagOnlyFoot = false;
+
+// Tells if starting with car or walking
+var startByCar = true;
+
+var maxFootDistance = 0;
 
 var originLatLon = null;
+var destinationLatLon = null;
 var lastPlacedWasOrigin = null;
 
 var ui = null;
 var socket = null;
+
 
 init();
 
@@ -43,12 +54,11 @@ function init() {
         alert( "The connection with the server was closed." );
     } );
 
-    /*
     socket.on( "ysConnectedToModule", function( msg ) {
-        if ( msg.instanceName === "maps" ) {
+        if ( msg.moduleInstanceName === "YomboMaps" ) {
+            createRouters( msg.data );
         }
     } );
-    */
 
     socket.on( "mapsTagList", function( msg ) {
         
@@ -106,9 +116,10 @@ function createMap() {
     // Interaction
 
     map.on( 'click', function( event ) {
-        
+
+// TODO change to var latLon = event.latlng;        
         var latLon = map.mouseEventToLatLng( event.originalEvent );
-        
+
         if ( selectRouteState === 'origin' ) {
             setRouteOrigin( latLon);
         }
@@ -122,38 +133,121 @@ function createMap() {
         color: 'green',
         fillColor: '#00a001',
         fillOpacity: 0.4,
-        radius: 500
+        radius: 500,
+        stroke: false
     } ).addTo( map );
 
+    return map;
+}
 
-    // Routing
+function createRouters( config ) {
+    
+    maxFootDistance = config.maxFootDistance;
+    
+    // Routing for the total route by car
 
     routingControlPrimary = L.Routing.control( {
 
 
         router: L.Routing.osrmv1( {
-            serviceUrl: "http://127.0.0.1:12346/route/v1",
+            serviceUrl: "http://127.0.0.1:" + config.carProfilePort + "/route/v1",
             timeout: 30000,
-            profile: "car",
+            profile: "ignored",
             useHints: true
         } ),
         waypoints: [],
-        routeWhileDragging: false,
-        fitSelectedRoutes: false
+        autoRoute: false,
+        routeWhileDragging: true,
+        fitSelectedRoutes: false,
+        lineOptions: {
+            addWaypoints: false,
+            clickable: false
+        }
 
     } );
 
-    routingControlPrimary.on('routeselected', function(e) {
+    routingControlPrimary.on('routeselected', function( e ) {
 
         processPrimaryRoute( e.route );
 
     } );
 
-
     routingControlPrimary.addTo( map );
+    
+    // Router for the walking part
+    
+    routingControlFoot = L.Routing.control( {
 
 
-    return map;
+        router: L.Routing.osrmv1( {
+            serviceUrl: "http://127.0.0.1:" + config.footProfilePort + "/route/v1",
+            timeout: 30000,
+            profile: "ignored",
+            useHints: true
+        } ),
+        waypoints: [],
+        routeWhileDragging: false,
+        fitSelectedRoutes: false,
+        lineOptions: {
+            addWaypoints: false,
+            clickable: false,
+            styles: [
+                {
+                    color: 'black',
+                    opacity: 0.15,
+                    weight: 9
+                },
+                {
+                    color: 'white',
+                    opacity: 0.8,
+                    weight: 6
+                },
+                {
+                    color: 'green',
+                    opacity: 1,
+                    weight: 2
+                }
+            ]
+        }
+
+    } );
+
+    routingControlFoot.on('routeselected', function( e ) {
+
+        processFootRoute( e.route );
+
+    } );
+
+    routingControlFoot.addTo( map );
+
+    
+    routingControlCar = L.Routing.control( {
+
+
+        router: L.Routing.osrmv1( {
+            serviceUrl: "http://127.0.0.1:" + config.carProfilePort + "/route/v1",
+            timeout: 30000,
+            profile: "ignored",
+            useHints: true
+        } ),
+        waypoints: [],
+        routeWhileDragging: false,
+        fitSelectedRoutes: false,
+        lineOptions: {
+            addWaypoints: false,
+            clickable: false
+        }
+
+    } );
+
+    routingControlCar.on('routeselected', function( e ) {
+
+        processCarRoute( e.route );
+
+    } );
+
+    routingControlCar.addTo( map );
+
 }
 
 function addMapLayer( name, layer ) {
@@ -238,7 +332,15 @@ function placePolylinesInMap( msg, callback ) {
     callback();
 }
 
-function setRouteOrigin( latLon ) {
+function setRouteOrigin( latLon, recalculateRoute ) {
+
+    if ( recalculateRoute === undefined ) {
+        recalculateRoute = true;
+    }
+
+    if ( ! routingControlPrimary ) {
+        return;
+    }
 
     originLatLon = latLon;
     
@@ -247,8 +349,6 @@ function setRouteOrigin( latLon ) {
     if ( wp.length >= 2 ) {
 
         wp[ 0 ] = originLatLon;
-
-        routingControlPrimary.setWaypoints( wp );
 
     }
     else if ( wp.length === 1 ) {
@@ -265,14 +365,24 @@ function setRouteOrigin( latLon ) {
     }
 
     routingControlPrimary.setWaypoints( wp );
+    
+    if ( recalculateRoute ) {
+        routingControlPrimary.route();
+    }
 
     lastPlacedWasOrigin = true;
 
 }
 
-function setRouteDestination( latLon ) {
+function setRouteDestination( latLon, recalculateRoute ) {
 
-    if ( ! originLatLon ) {
+    if ( recalculateRoute === undefined ) {
+        recalculateRoute = true;
+    }
+    
+    destinationLatLon = latLon;
+
+    if ( ! routingControlPrimary ) {
         return;
     }
 
@@ -284,33 +394,216 @@ function setRouteDestination( latLon ) {
     }
     else if ( wp.length === 1 ) {
         if ( lastPlacedWasOrigin === true || lastPlacedWasOrigin === null ) {
-            wp.push( latLon );
+            wp.push( destinationLatLon );
         }
         else {
-            wp[ 0 ] = latLon; 
+            wp[ 0 ] = destinationLatLon; 
         }
     }
     else {
         // There are no waypoints yet
-        wp.push( latLon );
+        wp.push( destinationLatLon );
     }
 
     routingControlPrimary.setWaypoints( wp );
+    
+    if ( recalculateRoute ) {
+        routingControlPrimary.route();
+    }
 
     lastPlacedWasOrigin = false;
 }
 
+function setRouteOriginAndDestination( orig, dest ) {
+
+    originLatLon = orig;
+    destinationLatLon = dest;
+
+    routingControlPrimary.setWaypoints( [ originLatLon, destinationLatLon ] );
+    routingControlPrimary.route();
+
+}
+
+function createLatLonArrayFromWaypoints( waypoints ) {
+    var a = [];
+    var n = waypoints.length;
+    for ( var i = 0; i < n; i++ ) {
+        a.push( createLatLonFromWaypoint( waypoints[ i ] ) );
+    }
+    
+    return a;
+}
+
+function createLatLonFromWaypoint( waypoint ) {
+    
+    return L.latLng( waypoint.latLng.lat, waypoint.latLng.lng );
+
+}
+
+function interpolateCoords( factor, latLon1, latLon2 ) {
+    return L.latLng(
+                ( latLon2.lat - latLon1.lat ) * factor + latLon1.lat,
+                ( latLon2.lng - latLon1.lng ) * factor + latLon1.lng
+            );
+}
+
 function processPrimaryRoute( route ) {
     
-    if ( route.inputWaypoints.length !== 2 ) {
+    var inputWaypoints = route.inputWaypoints;
+    
+    if ( inputWaypoints.length !== 2 ) {
         return;
     }
     
+    if ( route.summary.totalDistance < maxFootDistance ) {
+
+        // Can make all the travel by walking
+        
+        routingControlPrimary.setWaypoints( [] );
+        routingControlPrimary.route();
+        flagDontProcessFootRoute = true;
+        flagOnlyFoot = true;
+        routingControlFoot.setWaypoints( createLatLonArrayFromWaypoints( inputWaypoints ) );
+        routingControlCar.setWaypoints( [] );
+
+        return;
+        
+    }
     
+    flagOnlyFoot = false;
+    
+    var coordinates = route.coordinates;
 
-    // route.summary.totalDistance
-    // route.coordinates
+    if ( coordinates.length <= 2 ) {
+        return;
+    }
+    
+    var distance = 0;
+    
+    var nodeCount = coordinates.length - 1;
+    var index = 0;
+    var indexDirection = 1;
 
+    if ( startByCar ) {
+        index = coordinates.length - 1;
+        indexDirection = -1;
+    }
+
+    var previousLatLon = L.latLng( coordinates[ index ] );
+    var transferPoint = null;
+    for ( ; nodeCount > 0; index += indexDirection ) {
+        
+        var newLatLon = L.latLng( coordinates[ index ] );
+           
+        //var newDistance = distance + previousLatLon.distanceTo( newLatLon ); 
+        var d = map.distance( previousLatLon, newLatLon );
+        distance += d;
+        
+        if ( d > 0.001 && distance > maxFootDistance ) {
+            
+            transferPoint = interpolateCoords( 1 - ( distance - maxFootDistance ) / d, previousLatLon, newLatLon );
+        
+            break;
+            
+        }
+
+        previousLatLon = newLatLon;
+
+    }
+
+    routingControlPrimary.setWaypoints( [] );
+    routingControlPrimary.route();
+
+    if ( transferPoint ) {
+        flagDontProcessFootRoute = true;
+        flagDontProcessCarRoute = true;
+        if ( startByCar ) {
+            routingControlFoot.setWaypoints( [ transferPoint, createLatLonFromWaypoint( inputWaypoints[ inputWaypoints.length - 1 ] ) ] );
+            routingControlCar.setWaypoints( [ createLatLonFromWaypoint( inputWaypoints[ 0 ] ), transferPoint ] );
+        }
+        else {
+            routingControlCar.setWaypoints( [ transferPoint, createLatLonFromWaypoint( inputWaypoints[ inputWaypoints.length - 1 ] ) ] );
+            routingControlFoot.setWaypoints( [ createLatLonFromWaypoint( inputWaypoints[ 0 ] ), transferPoint ] );
+        }
+    }
+    else {
+        flagDontProcessFootRoute = true;
+        flagOnlyFoot = true;
+        routingControlFoot.setWaypoints( createLatLonArrayFromWaypoints( inputWaypoints ) );
+        routingControlCar.setWaypoints( [] );
+    }
+
+}
+
+function processFootRoute( route ) {
+    
+    var firstWaypoint = route.inputWaypoints[ 0 ];
+    var lastWaypoint = route.inputWaypoints[ route.inputWaypoints.length - 1 ];
+    
+    if ( flagDontProcessFootRoute ) {
+        
+        flagDontProcessFootRoute = false;
+        
+        if ( startByCar ) {
+            setRouteDestination( createLatLonFromWaypoint( lastWaypoint ), false );
+        }
+        else {
+            setRouteOrigin( createLatLonFromWaypoint( firstWaypoint ), false );
+        }
+        
+        return;
+    }
+
+    routingControlFoot.setWaypoints( [] );
+    routingControlCar.setWaypoints( [] );
+
+    if ( flagOnlyFoot ) {
+        setRouteOriginAndDestination( createLatLonFromWaypoint( firstWaypoint ), createLatLonFromWaypoint( lastWaypoint ) );
+    }
+    else {
+        if ( startByCar ) {
+            setRouteOriginAndDestination( originLatLon, createLatLonFromWaypoint( lastWaypoint ) );
+        }
+        else {
+            setRouteOriginAndDestination( createLatLonFromWaypoint( firstWaypoint ), destinationLatLon );
+        }
+    }
+
+}
+
+function processCarRoute( route ) {
+
+    var firstWaypoint = route.inputWaypoints[ 0 ];
+    var lastWaypoint = route.inputWaypoints[ route.inputWaypoints.length - 1 ];
+
+    if ( flagDontProcessCarRoute ) {
+        
+        flagDontProcessCarRoute = false;
+        
+        if ( startByCar ) {
+            setRouteOrigin( createLatLonFromWaypoint( firstWaypoint ), false );
+        }
+        else {
+            setRouteDestination( createLatLonFromWaypoint( lastWaypoint ), false );
+        }
+
+        return;
+    }
+
+    routingControlFoot.setWaypoints( [] );
+    routingControlCar.setWaypoints( [] );
+    
+    if ( flagOnlyFoot ) {
+        setRouteOriginAndDestination( createLatLonFromWaypoint( firstWaypoint ), createLatLonFromWaypoint( lastWaypoint ) );
+    }
+    else {
+        if ( startByCar ) {
+            setRouteOriginAndDestination( createLatLonFromWaypoint( firstWaypoint ), destinationLatLon );
+        }
+        else {
+            setRouteOriginAndDestination( originLatLon, createLatLonFromWaypoint( lastWaypoint ) );
+        }
+    }
 }
 
 function createUI() {

@@ -1142,7 +1142,9 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
             if ( index < 0 ) {
 
-                if ( module.clientConnection( client, msg ) ) {
+                var data = module.clientConnection( client, msg );
+
+                if ( data ) {
 
                     client.connectedModules.push( module );
 
@@ -1154,7 +1156,7 @@ YomboServer.TheServer.prototype.clientConnection = function( socket ) {
 
                     scope.talkToListeners( "clientConnectedToModule", { client: client, module: module } );
 
-                    socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName } );
+                    socket.emit( "ysConnectedToModule", { moduleName: module.name, moduleInstanceName: module.instanceName, data: data } );
 
                 }
                 // TODO

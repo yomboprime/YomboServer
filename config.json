@@ -37,13 +37,13 @@
                 "pbfPath": "../maps/pbf/mallorca.pbf",
                 "updatePBFEnabled": false,
                 "osrmServiceEnabled": true,
-                "osrmServerPort": 12346,
+                "osrmServiceMaxFootDistance": 1750,
+                "osrmServerFootProfilePort": 12346,
+                "osrmServerCarProfilePort": 12347,
                 "osrmServerPath": "../../soft/osrm-backend/build/osrm-routed",
                 "osrmServerCWD": "../../soft/osrm-backend",
-                "osrmServerProfiles": {
-                    "car": "../maps/osrm_car/mallorca.osrm",
-                    "foot": "../maps/osrm_foot/mallorca.osrm"
-                },
+                "osrmServerFootProfile": "../maps/osrm_foot/mallorca.osrm",
+                "osrmServerCarProfile": "../maps/osrm_car/mallorca.osrm",
                 "osrmServerAdditionalParameters": "-i 127.0.0.1 -t 1"
             }
         },

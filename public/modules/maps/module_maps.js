@@ -107,7 +107,11 @@ maps.maps.prototype.clientConnection = function( client, msg ) {
 
     } );
 
-    return true;
+    return {
+        footProfilePort: this.config.osrmServerFootProfilePort,
+        carProfilePort: this.config.osrmServerCarProfilePort,
+        maxFootDistance: this.config.osrmServiceMaxFootDistance
+    };
 
 };
 
