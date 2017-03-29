@@ -34,7 +34,10 @@ var maxFootDistance = 0;
 
 var originLatLon = null;
 var destinationLatLon = null;
-var lastPlacedWasOrigin = null;
+var originSet = false;
+var destinationSet = false;
+
+var initialMarker = null;
 
 var ui = null;
 var socket = null;
@@ -121,7 +124,7 @@ function createMap() {
         var latLon = map.mouseEventToLatLng( event.originalEvent );
 
         if ( selectRouteState === 'origin' ) {
-            setRouteOrigin( latLon);
+            setRouteOrigin( latLon );
         }
         else if ( selectRouteState === 'destination' ) {
             setRouteDestination( latLon );
@@ -150,13 +153,13 @@ function createRouters( config ) {
 
 
         router: L.Routing.osrmv1( {
-            serviceUrl: "http://127.0.0.1:" + config.carProfilePort + "/route/v1",
+            serviceUrl: "http://127.0.0.1:" + config.footProfilePort + "/route/v1",
             timeout: 30000,
             profile: "ignored",
             useHints: true
         } ),
         waypoints: [],
-        autoRoute: false,
+        //autoRoute: false,
         routeWhileDragging: true,
         fitSelectedRoutes: false,
         lineOptions: {
@@ -332,95 +335,76 @@ function placePolylinesInMap( msg, callback ) {
     callback();
 }
 
+function setInitialMarker( latLon ) {
+    if ( ! initialMarker ) {
+        initialMarker = L.marker( latLon );
+        initialMarker.addTo( map );
+    }
+    else {
+        initialMarker.setLatLng( latLon );
+    }
+}
+
+function hideInitialMarker( latLon ) {
+    initialMarker.remove();
+}
+
 function setRouteOrigin( latLon, recalculateRoute ) {
 
-    if ( recalculateRoute === undefined ) {
-        recalculateRoute = true;
-    }
-
+    originLatLon = latLon;
+    originSet = true;
+    
     if ( ! routingControlPrimary ) {
         return;
     }
 
-    originLatLon = latLon;
+    if ( ! destinationSet ) {
+        setInitialMarker( originLatLon );
+    }
+
+    if ( recalculateRoute !== undefined && recalculateRoute !== true ) {
+        return;
+    }
     
-    var wp = routingControlPrimary.getWaypoints();
-    
-    if ( wp.length >= 2 ) {
-
-        wp[ 0 ] = originLatLon;
-
+    if ( originSet && destinationSet ) {
+        hideInitialMarker();
+        routingControlPrimary.setWaypoints( [ originLatLon, destinationLatLon ] );
     }
-    else if ( wp.length === 1 ) {
-        if ( lastPlacedWasOrigin === true || lastPlacedWasOrigin === null ) {
-            wp[ 0 ] = latLon; 
-        }
-        else {
-            wp.unshift( originlatLon );
-        }
-    }
-    else {
-        // There are no waypoints yet
-        wp.push( originlatLon );
-    }
-
-    routingControlPrimary.setWaypoints( wp );
-    
-    if ( recalculateRoute ) {
-        routingControlPrimary.route();
-    }
-
-    lastPlacedWasOrigin = true;
-
 }
 
 function setRouteDestination( latLon, recalculateRoute ) {
 
-    if ( recalculateRoute === undefined ) {
-        recalculateRoute = true;
-    }
-    
     destinationLatLon = latLon;
+    destinationSet = true;
 
     if ( ! routingControlPrimary ) {
         return;
     }
 
-    var wp = routingControlPrimary.getWaypoints();
-    
-    if ( wp.length >= 2 ) {
-        originLatLon = wp[ 0 ];
-        wp[ wp.length - 1 ] = latLon; 
-    }
-    else if ( wp.length === 1 ) {
-        if ( lastPlacedWasOrigin === true || lastPlacedWasOrigin === null ) {
-            wp.push( destinationLatLon );
-        }
-        else {
-            wp[ 0 ] = destinationLatLon; 
-        }
-    }
-    else {
-        // There are no waypoints yet
-        wp.push( destinationLatLon );
+    if ( ! originSet ) {
+        setInitialMarker( destinationLatLon );
     }
 
-    routingControlPrimary.setWaypoints( wp );
+    if ( recalculateRoute !== undefined && recalculateRoute !== true ) {
+        return;
+    }
     
-    if ( recalculateRoute ) {
-        routingControlPrimary.route();
+    if ( originSet && destinationSet ) {
+        hideInitialMarker();
+        routingControlPrimary.setWaypoints( [ originLatLon, destinationLatLon ] );
     }
 
-    lastPlacedWasOrigin = false;
 }
 
 function setRouteOriginAndDestination( orig, dest ) {
 
     originLatLon = orig;
     destinationLatLon = dest;
+    originSet = true;
+    destinationSet = true;
 
+    hideInitialMarker();
     routingControlPrimary.setWaypoints( [ originLatLon, destinationLatLon ] );
-    routingControlPrimary.route();
 
 }
 
@@ -460,7 +444,6 @@ function processPrimaryRoute( route ) {
         // Can make all the travel by walking
         
         routingControlPrimary.setWaypoints( [] );
-        routingControlPrimary.route();
         flagDontProcessFootRoute = true;
         flagOnlyFoot = true;
         routingControlFoot.setWaypoints( createLatLonArrayFromWaypoints( inputWaypoints ) );
@@ -512,7 +495,6 @@ function processPrimaryRoute( route ) {
     }
 
     routingControlPrimary.setWaypoints( [] );
-    routingControlPrimary.route();
 
     if ( transferPoint ) {
         flagDontProcessFootRoute = true;
