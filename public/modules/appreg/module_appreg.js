@@ -34,10 +34,6 @@ appreg.appreg.prototype = {
 
 appreg.appreg.prototype.start = function( onStart ) {
 
-    this.yomboServer.mapFile( "/public/modules/appreg/main_appreg.js" );
-
-    this.yomboServer.mapDirectory( '/public/lib/openui5' );
-
     var scope = this;
 
     var appFunction = function() {

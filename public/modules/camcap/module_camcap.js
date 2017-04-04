@@ -40,12 +40,6 @@ camcap.camcap.prototype = {
 
 camcap.camcap.prototype.start = function( onStart ) {
 
-    this.yomboServer.mapFile( '/public/modules/camcap/camcap.html' );
-    this.yomboServer.mapFile( '/public/modules/camcap/main_camcap.js' );
-
-    this.yomboServer.mapFile( '/public/modules/camcap/camcap2.html' );
-    this.yomboServer.mapFile( '/public/modules/camcap/main_camcap2.js' );
-
     this.yomboServer.logInfo( "Starting camera capture. Device: " + this.config.device, "camcap.start", this.name, this.instanceName );
 
     this.camcapChildProcess = fork( "public/modules/camcap/camcapChildProc", [JSON.stringify( this.config )] );

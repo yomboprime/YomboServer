@@ -1,4 +1,5 @@
 
+var pathJoin = require( 'path' ).join;
 var loadJSONFileSync = require( "./public/lib/fileUtils/fileUtils.js" ).loadJSONFileSync;
 var isNumeric = require( "./public/lib/mathUtils/mathUtils.js" ).isNumeric;
 
@@ -171,25 +172,19 @@ YomboServer.TheServer.prototype.serveInternalServices = function() {
     // Serve root index.html
     this.app.get( '/', function( req, res ) {
 
-        res.sendFile( __dirname + '/public/index.html' );
+        res.sendFile( pathJoin( __dirname, '/public/index.html' ) );
 
     } );
 
     // Serve favicon
     this.app.get( '/favicon.png', function( req, res ) {
 
-        res.sendFile( __dirname + '/public/favicon.png' );
+        res.sendFile( pathJoin( __dirname, '/public/favicon.png' ) );
 
     } );
 
-    // Serve changefavicon lib
-    this.mapFile( "/public/lib/changefavicon/changefavicon.js" );
-
-    // Serve favicons asset directory
-    this.mapDirectory( '/public/assets/favicons' );
-    
-    // Serve generic icons
-    this.mapDirectory( "/public/assets/icons/generic" );
+    // Serve all public content
+    this.mapDirectory( "/public" );
 
     var scope = this;
 
@@ -615,7 +610,7 @@ YomboServer.TheServer.prototype.loadConfig = function() {
 
     this.logSystem( "Loading config file in ./config.json", "YomboServer.loadConfig" );
     
-    var config = loadJSONFileSync( __dirname + "/config.json" );
+    var config = loadJSONFileSync( pathJoin( __dirname,  "config.json" ) );
 
     if ( ! config ) {
         this.logError( "Error while loading config file in ./config.json", "YomboServer.loadConfig" );
@@ -858,17 +853,19 @@ YomboServer.TheServer.prototype.isLocalRequest = function( req ) {
 
 // ***** Net Services *****
 
-YomboServer.TheServer.prototype.mapFile = function( path ) {
+YomboServer.TheServer.prototype.mapFile = function( webPath, path ) {
+    
+    path = path || webPath;
 
     var index = this.servedRoutes.indexOf( path );
 
     if ( index < 0 ) {
 
-        this.servedRoutes.push( path );
+        this.servedRoutes.push( webPath );
 
-        this.app.get( path, function( req, res ) {
+        this.app.get( webPath, function( req, res ) {
 
-            res.sendFile( __dirname + path );
+            res.sendFile( pathJoin( __dirname, path ) );
 
         } );
 
@@ -886,13 +883,13 @@ YomboServer.TheServer.prototype.mapDirectory = function( webPath, path ) {
 
         this.servedRoutes.push( webPath );
 
-        this.app.use( webPath, this.express.static( __dirname + path ) );
+        this.app.use( webPath, this.express.static( pathJoin( __dirname, path ) ) );
 
     }
 
 };
 
-YomboServer.TheServer.prototype.mapFileArray = function() {
+YomboServer.TheServer.prototype.mapFileArray = function( pathArray ) {
     
     for ( var i = 0, il = pathArray.length; i < il; i ++ ) {
 
@@ -923,7 +920,7 @@ YomboServer.TheServer.prototype.mapDirectoryWithToken = function( path, pathPrea
                 var index = originalUrl.indexOf( "?" );
                 if ( index >= 0 ) {
                     console.log( "CONNECTION: token = " + reqToken );
-                    res.sendFile( __dirname + pathPreamble + originalUrl.substring( 0, index ) );
+                    res.sendFile( pathJoin( __dirname, pathPreamble, originalUrl.substring( 0, index ) );
                 }
 //            }
         } );

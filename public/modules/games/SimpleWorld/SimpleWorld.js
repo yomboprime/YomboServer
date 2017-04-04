@@ -21,9 +21,6 @@ function init( gamesModule ) {
 
     yomboServer.registerApplication( gamesModule.config.gameName, gamesModule.config.gameDescription, gamesModule.yomboServer.gethostURL( "public/modules/games/SimpleWorld/SimpleWorld.html?gameModuleName=" + gamesModule.instanceName ) );
 
-    yomboServer.mapDirectory( "/public/lib/three" );
-    yomboServer.mapDirectory( "/public/lib/openui5" );
-
     var activeEntities = [];
     gamesModule.activeEntities = activeEntities;
     var activeEntitiesInstanceData = [];

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Yomboserver Walkie-Talker</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+	    body {
+		background-color: black;
+	    }
+            .selfVideo {
+                height:225px;
+                width:300px;
+            }
+            .otherVideo {
+                height:225px;
+                width:300px;
+            }
+        </style>
+
+        <script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="/easyrtc/easyrtc.js"></script>
+	<script src="main_walkie-talker.js"></script>
+
+    </head>
+
+    <body>
+
+	<button id="connectButton" onclick="init()">Conectar micrófono y escuchar al grupo</button>
+
+	<video id="localVideo" class="selfVideo"></video>
+        
+        <div id="divVideos"></div>
+
+    </body>
+</html>

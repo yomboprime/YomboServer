@@ -73,15 +73,6 @@ games.games.prototype.start = function( onStart ) {
         this.entities = [];
         this.nextPlayerId = 0;
 
-        // Serve game main html
-        this.yomboServer.mapFile( "/public/modules/games/" + this.config.gameName + "/" + this.config.gameName + ".html" );
-
-        // Serve common client js
-        this.yomboServer.mapFile( "/public/modules/games/gameClient.js" );
-
-        // Serve game assets
-        this.yomboServer.mapDirectory( "/public/modules/games/" + this.config.gameName + "/assets" );
-
         this.clientEvents.push( "gmInput" );
 
         // Start the game
@@ -177,7 +168,7 @@ games.games.prototype.getEntityClassMsg = function( entityClass ) {
         name: entityClass.name,
         id: entityClass.id,
         createNewInstance: this.yomboServer.getFunctionBody( entityClass.createNewInstanceClient ),
-        updateEntity: this.yomboServer.getFunctionBody( entityClass.updateEntityClient.toString() )
+        updateEntity: this.yomboServer.getFunctionBody( entityClass.updateEntityClient )
     };
 
 };
@@ -209,7 +200,7 @@ games.games.prototype.createNewEntityInstance = function( entityClassName, insta
     entity.instanceData.entityId = entityInstanceId;
     entity.instanceData.destroyed = false;
 
-    // Emit "new intance" message to clients
+    // Emit "new instance" message to clients
     this.yomboServer.emitToRoom( this.theRoom, "gmNewEntity", instanceDataClient );
 
     return entity;
@@ -226,7 +217,7 @@ games.games.prototype.destroyEntityInstance = function( entity ) {
 
 games.games.prototype.emitEntityInstanceData = function( entity ) {
 
-    this.yomboServer.emitToRoom( this.theRoom, "gmData", [entity.instanceData] );
+    this.yomboServer.emitToRoom( this.theRoom, "gmData", [ entity.instanceData ] );
 
 };
 
@@ -276,6 +267,7 @@ games.games.prototype.initPlayer = function( client, playerEntityClassName, inst
     socket.emit( "gmPlayerId", client.gm.playerId );
 
     // Send all entity classes definitions
+    // TODO send an initial "classes count" message so the client can make a progress bar. Perhaps in the gmPlayerId message
     var nc = this.entityClasses.length;
     for ( var i = 0; i < nc; i ++ ) {
         var entityClassMsg = this.getEntityClassMsg( this.entityClasses[ i ] );

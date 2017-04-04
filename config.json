@@ -30,7 +30,7 @@
         {
             "name": "maps",
             "instanceName": "YomboMaps",
-            "enabled": true,
+            "enabled": false,
             "config": {
                 "tilesPath": "/../maps/tiles/",
                 "pbfServiceEnabled": true,
@@ -50,7 +50,7 @@
         {
             "name": "games",
             "instanceName": "SimpleWorldGame",
-            "enabled": false,
+            "enabled": true,
             "config": {
                 "gameName": "SimpleWorld",
                 "gameDescription": "A SimpleWorld game",

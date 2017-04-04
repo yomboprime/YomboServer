@@ -120,8 +120,9 @@ function createMap() {
 
     map.on( 'click', function( event ) {
 
-// TODO change to var latLon = event.latlng;        
-        var latLon = map.mouseEventToLatLng( event.originalEvent );
+        var latLon = event.latlng;
+        
+        console.log( "LAT, LON = " + latLon.lat + ", " + latLon.lng );
 
         if ( selectRouteState === 'origin' ) {
             setRouteOrigin( latLon );
@@ -625,6 +626,7 @@ function createUI() {
             { id: 'btnSelectDestination', text: 'Select destination', img: 'icon-page' }
         ],
         onClick: function (event) {
+            
             if ( event.target === 'btnSelectOrigin' ) {
                 selectRouteState = 'origin';
             }

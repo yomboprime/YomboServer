@@ -4,7 +4,7 @@
 var fs = require( "fs" );
 
 
-if ( typeof module !== undefined ) {
+if ( typeof module !== 'undefined' ) {
     module.exports = {
         loadJSONFileSync: loadJSONFileSync,
         writeJSONFileSync: writeJSONFileSync,

@@ -36,16 +36,13 @@ maps.maps.prototype = {
 
 maps.maps.prototype.start = function( onStart ) {
 
-    this.yomboServer.mapDirectory( "/public/lib/leaflet" );
-
-    this.yomboServer.mapFile( "/public/modules/maps/testMap.html" );
-    this.yomboServer.mapFile( "/public/modules/maps/main_testMap.js" );
-    
-    this.yomboServer.mapFile( "/public/static/testBug.html" );
+    this.yomboServer.mapFile( "/public/modules/maps/mallorca.pbf", this.config.pbfPath );
 
     this.yomboServer.mapDirectory( "/tiles/", this.config.tilesPath );
 
     this.clientEvents.push( "mapsGetTagList", "mapsGetNodes", "mapsGetWays" );
+    
+    this.yomboServer.registerApplication( "3dMaps", "3d Maps", this.yomboServer.gethostURL( "public/modules/maps/3dMap.html" ) );
 
     if ( onStart ) {
 
@@ -56,6 +53,8 @@ maps.maps.prototype.start = function( onStart ) {
 };
 
 maps.maps.prototype.stop = function( onStop ) {
+    
+    this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/maps/3dMap.html" ) );
 
     if ( onStop ) {
 
@@ -119,77 +118,6 @@ maps.maps.prototype.clientDisconnection = function( client ) {
 
     //this.yomboServer.removeClientFromRoom( client, this.theRoom );
 
-};
-
-
-maps.maps.prototype.getTagsTest = function( callback ) {
-
-    setTimeout( function() {
-
-        callback( {
-            nodesTags: [
-                {
-                    tag: "na",
-                    values: [
-                        {
-                            count: 1,
-                            value: "value_na"
-                        }
-                    ]
-                },
-                {
-                    tag: "nb",
-                    values: [
-                        {
-                            count: 1,
-                            value: "value_nb"
-                        }
-                    ]
-                },
-                {
-                    tag: "nc",
-                    values: [
-                        {
-                            count: 1,
-                            value: "value_nc"
-                        }
-                    ]
-                }
-            ],
-            waysTags: [
-                {
-                    tag: "wa",
-                    values: [
-                        {
-                            count: 1,
-                            value: "value_wa"
-                        }
-                    ]
-                },
-                {
-                    tag: "wb",
-                    values: [
-                        {
-                            count: 1,
-                            value: "value_wb"
-                        }
-                    ]
-                },
-                {
-                    tag: "wc",
-                    values: [
-                        {
-                            count: 1,
-                            value: "value_wc"
-                        }
-                    ]
-                }
-            ]
-
-        } );
-
-    }, 2000 );
-        
 };
     
 maps.maps.prototype.getTags = function( callback ) {

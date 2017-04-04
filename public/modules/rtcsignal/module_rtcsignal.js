@@ -36,13 +36,9 @@ rtcsignal.rtcsignal.prototype = {
 
 rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
-    this.yomboServer.mapFile( "/public/modules/rtcsignal/cameraClient.html" );
-    this.yomboServer.mapFile( "/public/modules/rtcsignal/main_cameraClient.js" );
-    this.yomboServer.mapFile( "/public/modules/rtcsignal/audienceClient.html" );
-    this.yomboServer.mapFile( "/public/modules/rtcsignal/main_audienceClient.js" );
-
     this.yomboServer.registerApplication( "Video viewer", "View video streams", this.yomboServer.gethostURL( "public/modules/rtcsignal/audienceClient.html" ) );
     this.yomboServer.registerApplication( "Video transmitter", "Transmit video streams", this.yomboServer.gethostURL( "public/modules/rtcsignal/cameraClient.html" ) );
+    this.yomboServer.registerApplication( "Walkie-Talker", "N-tier audio calls with vintage walkie-talkie features", this.yomboServer.gethostURL( "public/modules/rtcsignal/walkie-talker.html" ) );
 
 
     easyrtc.setOption( "logLevel", "debug" );
@@ -113,10 +109,7 @@ rtcsignal.rtcsignal.prototype.start = function( onStart ) {
 
 rtcsignal.rtcsignal.prototype.stop = function( onStop ) {
 
-    // TODO !!!
-
-    this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/rtcsignal/audienceClient.html" ) );
-    this.yomboServer.unregisterApplication( this.yomboServer.gethostURL( "public/modules/rtcsignal/cameraClient.html" ) );
+    // This module can't be manually stopped
 
     if ( onStop ) {
 

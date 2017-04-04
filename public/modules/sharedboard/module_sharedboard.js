@@ -34,19 +34,6 @@ sharedboard.sharedboard.prototype = {
 
 sharedboard.sharedboard.prototype.start = function( onStart ) {
 
-    this.yomboServer.mapFile( "/public/modules/sharedboard/sharedboard.html" );
-    this.yomboServer.mapFile( "/public/modules/sharedboard/ui_sharedboard.js" );
-    this.yomboServer.mapFile( "/public/modules/sharedboard/main_sharedboard.js" );
-    this.yomboServer.mapFile( "/public/modules/sharedboard/sharedboard.js" );
-    this.yomboServer.mapFile( "/public/modules/sharedboard/sharedboardLoader.html" );
-    this.yomboServer.mapFile( "/public/modules/sharedboard/sharedboardLoader.js" );
-
-    this.yomboServer.mapDirectory( "/public/assets/icons/sharedboard" );
-
-    this.yomboServer.mapDirectory( "/public/lib/openui5" );
-
-    this.yomboServer.mapDirectory( "/public/lib/three" );
-
     this.clientEvents.push( "yssbGetLatestData", "yssbPaintCommand" );
 
     this.yomboServer.registerApplication( "SharedBoard", "A shared board for drawing", this.yomboServer.gethostURL( "public/modules/sharedboard/sharedboardLoader.html" ) );
